@@ -40,10 +40,6 @@
 <table align="center">
   <tr>
     <td align="center" width="33%">
-      <img src="./images/qq_qrcode.png" width="180" height="180" alt="QQ群二维码"/><br>
-      <b>🐧 QQ 群：1047993501</b>
-    </td>
-    <td align="center" width="33%">
       <img src="./images/wx_qun_qrcode.png" width="180" height="180" alt="微信群二维码"/><br>
       <b>💬 微信群</b>
     </td>
