@@ -60,12 +60,6 @@
 
 ---
 
-## 📄 许可证
-
-本项目基于 [MIT License](LICENSE) 开源，可自由使用、修改和商用。
-
----
-
 <p align="center">
   <b>如果 GuaDa 对你有帮助，欢迎在 Gitee 上点个 Star ⭐</b><br>
   <sub>你的每一次 Star，都是让这个项目变得更好的动力</sub>
