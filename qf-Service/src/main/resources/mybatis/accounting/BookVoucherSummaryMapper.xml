@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.voucher.mapper.BookVoucherSummaryMapper">
+
+    <resultMap type="BookVoucherSummary" id="BookVoucherSummaryResult">
+        <result property="summary"    column="summary"    />
+        <result property="isDefault"    column="is_default"    />
+        <result property="bookId"    column="book_id"    />
+    </resultMap>
+
+    <select id="getList" resultType="BookVoucherSummary">
+        select  * from book_voucher_summary where book_id = #{bookId} or book_id = 0
+    </select>
+
+
+</mapper>

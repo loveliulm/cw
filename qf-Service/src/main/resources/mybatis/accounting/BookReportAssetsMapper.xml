@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportAssetsMapper">
+
+    <resultMap type="BookReportAssets" id="BookReportAssetsResult">
+        <result property="id"    column="id"    />
+        <result property="assetsName"    column="assets_name"    />
+        <result property="assetsRowNum"    column="assets_row_num"    />
+        <result property="assetsLevel"    column="assets_level"    />
+        <result property="isAssetsRule"    column="is_assets_rule"    />
+        <result property="debtName"    column="debt_name"    />
+        <result property="debtRowNum"    column="debt_row_num"    />
+        <result property="debtEndBalance"    column="debt_end_balance"    />
+        <result property="debtYearInitBalance"    column="debt_year_init_balance"    />
+        <result property="debtLevel"    column="debt_level"    />
+        <result property="isDebtRule"    column="is_debt_rule"    />
+        <result property="bookId"    column="book_id"    />
+    </resultMap>
+
+
+    <insert id="initInsetReportAssets">
+        INSERT INTO book_report_assets
+        (`book_id`,`assets_name`,`assets_row_num`,`assets_level`,`assets_title`,`is_assets_rule`,`debt_name`,`debt_row_num`,`debt_level`,`debt_title`,`is_debt_rule`,create_time,update_time)
+        SELECT #{bookId},`assets_name`,`assets_row_num`,`assets_level`,`assets_title`,`is_assets_rule`,`debt_name`,`debt_row_num`,`debt_level`,`debt_title`,`is_debt_rule`,now(),now()
+        FROM book_report_assets_model where template_id = #{templateId}
+    </insert>
+
+
+    <select id="getList" parameterType="ReportAssetsParams" resultType="BookReportAssets">
+        select * from book_report_assets where book_id = #{bookId}
+    </select>
+
+    <select id="endBalance" parameterType="ReportAssetsParams" resultType="BigDecimal">
+        SELECT   IFNULL(bsp.period_end_balance,0)
+        from book_subject_period bsp
+	    LEFT JOIN book_subject bs on bs.subject_id = bsp.subject_id
+        where bs.code = #{subjectCode} and bsp.year_period = #{currentPeriod} and bs.book_id = #{bookId} and bsp.del_flag = '0'
+    </select>
+
+    <select id="yearInitBalance" parameterType="ReportAssetsParams" resultType="BigDecimal">
+        SELECT   IFNULL(bsp.period_end_balance,0)
+        from book_subject_period bsp
+	    LEFT JOIN book_subject bs on bs.subject_id = bsp.subject_id
+        where bs.code = #{subjectCode} and bsp.year_period = #{lastYearPeriod} and bs.book_id = #{bookId} and bsp.del_flag = '0'
+    </select>
+
+
+    <select id="getSubject" parameterType="ReportAssetsParams" resultType="BookSubject">
+        SELECT * from book_subject where code = #{subjectCode} and book_id = #{bookId}
+    </select>
+
+    <select id="getReportAssetsTotal" resultType="BookReportAssets">
+        select * from book_report_assets where book_id = #{bookId} and assets_name = '资产总计：'
+    </select>
+
+    <select id="getReportAssets" parameterType="ReportAssetsParams" resultType="BookReportAssets">
+        select * from book_report_assets where book_id = #{bookId} and (assets_row_num = #{rowNum} or debt_row_num = #{rowNum})
+    </select>
+
+</mapper>

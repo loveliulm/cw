@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.accountBook.mapper.QuantityDetailAccountMapper">
+
+    <select id="getSubjectList" parameterType="ParamsVo" resultType="SubjectVo">
+        SELECT * from (
+        <foreach collection="SUBJECT_CODE_RULE" index="index" item="codeNum" separator="union all">
+            SELECT subject_id,name subjectName,code subjectCode,CONCAT(code,' ',full_name) subjectNameBy,`level` from book_subject where  code in(
+            SELECT LEFT(bs.code,#{codeNum}) FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId} and bs.is_quantity = 1
+            and bv.year_period &gt;= #{startPeriod} and bv.year_period &lt;= #{endPeriod}
+            GROUP BY LEFT(bs.code,#{codeNum})
+            ) and book_id = #{bookId} and `level` = #{index}+1
+        </foreach>
+        )a where 1=1
+        <if test="startLevel != null">
+            and a.level >= #{startLevel}
+        </if>
+        <if test="endLevel != null">
+            and a.level &lt;= #{endLevel}
+        </if>
+        GROUP BY a.subject_id order BY a.subjectCode
+    </select>
+
+    <!--根据当前账期-本期发生额明细-->
+    <select id="getListByPeriod" parameterType="ParamsVo" resultType="QuantityDetailAccount">
+        SELECT *,ROUND(debit_total/debitQuantity) debitPrice,ROUND(credit_total/creditQuantity,2)creditPrice from (
+            SELECT bv.year_period,bv.voucher_date,bv.voucher_code,bv.voucher_id,bvr.summary,
+            IFNULL(SUM(IF(bvr.balance_direction='DEBIT',bvr.quantity,0)),0) debitQuantity,
+            IFNULL(SUM(IF(bvr.balance_direction='CREDIT',bvr.quantity,0)),0) creditQuantity,
+            IFNULL(SUM(bvr.debit),0) debit_total,IFNULL(SUM(bvr.credit),0) credit_total
+            FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId}
+            and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id =
+            #{bookId}) ,'%')
+            and bvr.price is not null and bvr.quantity is not null
+            <if test="currentPeriod">and bv.year_period = #{currentPeriod}
+            </if>
+            GROUP BY bv.
+            year_period,bv.voucher_date,bv.voucher_code,bv.voucher_id,bvr.summary
+        ) a
+    </select>
+
+    <!--根据当前账期-期初余额-->
+    <select id="selectPeriodInitBalance" parameterType="ParamsVo" resultType="QuantityDetailAccount">
+        SELECT '期初余额'summary,SUM(bsp.period_end_balance) balance
+        from book_subject_period bsp
+        LEFT JOIN book_subject bs on bsp.subject_id = bs.subject_id
+        where bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id =
+            #{bookId}) ,'%')
+         and bsp.year_period = #{currentPeriod} and bs.is_quantity = 1 and bs.is_leaf = 1
+    </select>
+
+    <!--根据当前账期-本期合计-->
+    <select id="monthBalanceByPeriod" parameterType="ParamsVo" resultType="QuantityDetailAccount">
+        SELECT *,ROUND(debit_total/debitQuantity,2) debitPrice,ROUND(credit_total/creditQuantity,2)creditPrice from (
+            SELECT '本期合计'summary,
+            IFNULL(SUM(IF(bvr.balance_direction='DEBIT',bvr.quantity,0)),0) debitQuantity,
+            IFNULL(SUM(IF(bvr.balance_direction='CREDIT',bvr.quantity,0)),0) creditQuantity,
+            IFNULL(SUM(bvr.debit),0) debit_total,
+            IFNULL(SUM(bvr.credit),0) credit_total
+            FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId}
+            and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id =
+            #{bookId}) ,'%')
+            and bvr.price is not null and bvr.quantity is not null
+            <if test="currentPeriod">
+                and bv.year_period = #{currentPeriod}
+            </if>
+        ) a
+    </select>
+
+    <!--根据当前账期-本年累计-->
+    <select id="yearBalanceByPeriod" parameterType="ParamsVo" resultType="QuantityDetailAccount">
+        SELECT *,ROUND(debit_total/debitQuantity,2) debitPrice,ROUND(credit_total/creditQuantity,2)creditPrice from (
+            SELECT '本年累计'summary,
+            IFNULL(SUM(IF(bvr.balance_direction='DEBIT',bvr.quantity,0)),0) debitQuantity,
+            IFNULL(SUM(IF(bvr.balance_direction='CREDIT',bvr.quantity,0)),0) creditQuantity,
+            IFNULL(SUM(bvr.debit),0) debit_total,
+            IFNULL(SUM(bvr.credit),0) credit_total
+            FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId}
+            and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+            and bvr.price is not null and bvr.quantity is not null
+            <if test="currentPeriod">
+                and bv.year_period &lt;= #{currentPeriod} and YEAR(year_period) = YEAR(#{currentPeriod})
+            </if>
+        ) a
+    </select>
+
+
+</mapper>

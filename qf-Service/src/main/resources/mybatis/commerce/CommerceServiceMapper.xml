@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.commerce.mapper.CommerceServiceMapper">
+
+    <resultMap type="CommerceService" id="CommerceServiceResult">
+        <result property="id"    column="id"    />
+        <result property="contractId"    column="contract_id"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="operatorUserId"    column="operator_user_id"    />
+        <result property="status"    column="status"    />
+        <result property="taskStatus"    column="task_status"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="remark"    column="remark"    />
+        <result property="serviceStatus"    column="service_status"    />
+    </resultMap>
+
+    <sql id="baseSql">
+        id,contract_id,create_time,create_by,operator_user_id,status,task_status,update_time,update_by,remark,service_status
+    </sql>
+
+    <resultMap id="CommerceServiceVoResult" type="CommerceServiceVo" extends="CommerceServiceResult">
+        <result property="customerName"    column="customer_name"    />
+        <result property="serviceItemName"    column="service_item_name"    />
+        <result property="serviceTypeName"    column="service_type_name"    />
+        <result property="contractStartDate"    column="contract_start_date"    />
+        <result property="contractEndDate"    column="contract_end_date"    />
+        <result property="contractNo"    column="contract_no"    />
+    </resultMap>
+
+    <select id="getList" resultMap="CommerceServiceVoResult">
+        select
+        cs.id,cs.contract_id,cs.create_time,cs.create_by,cs.operator_user_id,cs.status,cs.update_time,cs.update_by,cs.remark,cs.service_status,
+        (select user_name from sys_user u where u.user_id = cs.operator_user_id) as operatorUserName,
+        ct.customer_name AS customer_name,c.contract_start_date,c.contract_end_date,c.contract_no,
+        (SELECT service_item_name from base_service_item where service_item_id = c.service_item_id) service_item_name,
+        (SELECT service_type_name from base_service_type where service_type_id = c.service_type_id) service_type_name,
+        /*(SELECT css.step_name FROM t_commerce_service_step css WHERE css.commerce_service_id = cs.id AND css.step_status=0 ORDER BY step_order LIMIT 1) task_status,
+        (SELECT css.step_data FROM t_commerce_service_step css WHERE css.commerce_service_id = cs.id AND css.step_status=0 ORDER BY step_order LIMIT 1) processData*/
+        t1.step_name task_status,t1.step_data processData,ct.representative ,ct.normal_contact_phone as normalContactPhone
+        from t_commerce_service cs
+        LEFT JOIN t_contract c ON cs.contract_id = c.contract_id
+        LEFT JOIN t_customer ct ON ct.id = c.customer_id
+        LEFT JOIN (
+        SELECT css.step_name,css.commerce_service_id,css.step_data FROM t_commerce_service_step css WHERE css.step_status = 0 GROUP BY css.commerce_service_id
+        ) t1 ON t1.commerce_service_id = cs.id
+        <where>
+            c.dept_id = #{deptId}
+            <if test="customerName != null and customerName != ''">
+                and ct.customer_name like '%${customerName}%'
+            </if>
+            <if test="serviceTypeId != null and serviceTypeId != ''">
+                and c.service_type_id = #{serviceTypeId}
+            </if>
+            <if test="isDel != null">
+                AND cs.is_del = #{isDel}
+            </if>
+            <if test="operatorUserId != null and operatorUserId != ''">
+                AND cs.operator_user_id = #{operatorUserId}
+            </if>
+            <if test="status != null and status != '' ">
+                AND cs.status = #{status}
+            </if>
+            <if test="serviceStatus != null and serviceStatus != ''">
+                AND cs.service_status = #{serviceStatus}
+            </if>
+            ORDER BY c.create_time DESC
+        </where>
+    </select>
+
+    <!--    <select id="getList" resultMap="CommerceServiceVoResult">-->
+    <!--        SELECT-->
+    <!--            SUBSTRING_INDEX( temp.temp_column, ',', 1 ) AS 'task_status',-->
+    <!--            SUBSTRING_INDEX( temp.temp_column, ',',- 1 ) AS 'processData',-->
+    <!--            temp.*-->
+    <!--            FROM-->
+    <!--            (-->
+    <!--                SELECT-->
+    <!--                cs.id,-->
+    <!--                cs.contract_id,-->
+    <!--                cs.create_time,-->
+    <!--                cs.create_by,-->
+    <!--                cs.operator_user_id,-->
+    <!--                cs.STATUS,-->
+    <!--                cs.update_time,-->
+    <!--                cs.update_by,-->
+    <!--                cs.remark,-->
+    <!--                cs.is_del,-->
+    <!--                ( SELECT user_name FROM sys_user u WHERE u.user_id = cs.operator_user_id ) AS operatorUserName,-->
+    <!--                ct.customer_name AS customer_name,-->
+    <!--                c.contract_start_date,-->
+    <!--                c.contract_end_date,-->
+    <!--                c.service_type_id,-->
+    <!--                ( SELECT service_item_name FROM base_service_item WHERE service_item_id = c.service_item_id ) service_item_name,-->
+    <!--                ( SELECT service_type_name FROM base_service_type WHERE service_type_id = c.service_type_id ) service_type_name,-->
+    <!--                (-->
+    <!--                SELECT-->
+    <!--                    concat_ws( ',', css.step_name, IFNULL( css.step_data, "无" ) )-->
+    <!--                    FROM-->
+    <!--                        t_commerce_service_step css-->
+    <!--                    WHERE-->
+    <!--                        css.commerce_service_id = cs.id-->
+    <!--                        AND css.step_status = 0-->
+    <!--                    ORDER BY-->
+    <!--                        step_order-->
+    <!--                        LIMIT 1-->
+    <!--                ) temp_column,-->
+    <!--                c.dept_id AS dept_id-->
+    <!--                FROM-->
+    <!--                t_commerce_service cs-->
+    <!--                LEFT JOIN t_contract c ON cs.contract_id = c.contract_id-->
+    <!--                LEFT JOIN t_customer ct ON ct.id = c.customer_id-->
+    <!--            ) temp-->
+    <!--        <where>-->
+    <!--            temp.dept_id = #{deptId}-->
+    <!--            <if test="customerName != null and customerName != ''">-->
+    <!--                and temp.customer_name like '%${customerName}%'-->
+    <!--            </if>-->
+    <!--            <if test="serviceTypeId != null and serviceTypeId != ''">-->
+    <!--                and temp.service_type_id = #{serviceTypeId}-->
+    <!--            </if>-->
+    <!--            <if test="isDel != null">-->
+    <!--                AND temp.is_del = #{isDel}-->
+    <!--            </if>-->
+    <!--            ORDER BY temp.create_time DESC-->
+    <!--        </where>-->
+    <!--    </select>-->
+
+    <update id="deleteBycontractIds" parameterType="Long">
+        UPDATE t_commerce_service SET is_del=2 WHERE contract_id IN
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="selectById" parameterType="Long" resultMap="CommerceServiceVoResult">
+        select
+            cs.*,
+            (select user_name from sys_user u where u.user_id = cs.operator_user_id) as operatorUserName,
+            ct.customer_name AS customer_name,c.contract_start_date,c.contract_end_date,
+            (SELECT service_item_name from base_service_item where service_item_id = c.service_item_id) service_item_name,
+            (SELECT service_type_name from base_service_type where service_type_id = c.service_type_id) service_type_name,
+            ct.representative ,ct.normal_contact_phone as normalContactPhone
+        from t_commerce_service cs
+            LEFT JOIN t_contract c ON cs.contract_id = c.contract_id
+            LEFT JOIN t_customer ct ON ct.id = c.customer_id
+        WHERE
+            cs.id = #{id}
+    </select>
+
+    <select id="getListByIds" parameterType="Long" resultMap="CommerceServiceResult">
+        select <include refid="baseSql"/> from t_commerce_service WHERE id IN
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="getIndexData" resultType="com.qifu.project.commerce.domain.vo.StatisticalData">
+        <!--        SELECT-->
+        <!--            SUM( CASE WHEN c.service_type_id = 3 THEN 1 ELSE 0 END ) registerData ,-->
+        <!--            SUM( CASE WHEN c.service_type_id = 4 THEN 1 ELSE 0 END ) alterationData ,-->
+        <!--            SUM( CASE WHEN c.service_type_id = 5 THEN 1 ELSE 0 END ) logoutData-->
+        <!--        FROM-->
+        <!--            t_commerce_service cs-->
+        <!--            LEFT JOIN t_contract c ON cs.contract_id = c.contract_id-->
+        <!--        <where>-->
+        <!--            cs.is_del = 0 AND cs.`status` != 2-->
+        <!--            <if test="deptId != null and deptId != ''">-->
+        <!--                AND c.dept_id = #{deptId}-->
+        <!--            </if>-->
+
+        <!--        </where>-->
+        SELECT
+        COUNT( cs.id ) amount,
+        SUM( CASE WHEN cs.`status` != 2 THEN 1 ELSE 0 END ) unfinished,
+        SUM( CASE WHEN col.is_end = 0 THEN 1 ELSE 0 END ) uncleared
+        FROM
+        t_commerce_service cs
+        LEFT JOIN t_contract c ON cs.contract_id = c.contract_id
+        LEFT JOIN t_collection col ON col.contract_id = c.contract_id
+        WHERE
+        cs.is_del = 0
+        <if test="deptId != null and deptId != ''">
+            AND c.dept_id = #{deptId}
+        </if>
+        <if test="type != null and type == 'month' ">
+            AND DATE_FORMAT( cs.create_time, '%Y%m' ) = DATE_FORMAT( CURDATE( ), '%Y%m' )
+        </if>
+
+    </select>
+</mapper>

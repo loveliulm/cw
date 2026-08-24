@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.base.mapper.BaseServiceItemMapper">
+
+    <select id="serviceTypeItemList" resultType="ParkAddressVo">
+        SELECT bsi.*,(SELECT service_type_name FROM base_service_type
+        where service_type_id = bsi.service_type_id ) service_type_name from base_service_item bsi where bsi.service_type_id = #{serviceTypeId}
+    </select>
+
+</mapper>

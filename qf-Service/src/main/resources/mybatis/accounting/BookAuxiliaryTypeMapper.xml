@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookAuxiliaryTypeMapper">
+    
+    <resultMap type="BookAuxiliaryType" id="BookAuxiliaryTypeResult">
+        <result property="auxiliaryTypeId"    column="auxiliary_type_id"    />
+        <result property="auxiliaryType"    column="auxiliary_type"    />
+        <result property="suxiliaryTypeText"    column="suxiliary_type_text"    />
+    </resultMap>
+
+
+</mapper>

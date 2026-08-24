@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.base.mapper.BaseServiceTypeMapper">
+
+    <resultMap type="BaseServiceType" id="BaseServiceTypeResult">
+        <result property="serviceTypeId"    column="service_type_id"    />
+        <result property="serviceTypeName"    column="service_type_name"    />
+    </resultMap>
+
+    <!--工商服务流程-左边树-->
+    <select id="selectServiceTypelist" resultType="BaseServiceTypeVo">
+        select * from base_service_type where service_class_id = 2
+    </select>
+
+    <select id="serviceClassList" resultType="ServiceClassVo">
+        SELECT service_class_id id,class_name name,0 fatherId FROM `base_service_class`;
+    </select>
+
+    <select id="selectServiceTypelistName" resultType="ServiceTypeVo">
+        SELECT service_type_id servieTypeId,service_type_name name ,service_class_id fatherId from base_service_type where service_class_id = #{serviceClassId}
+    </select>
+
+    <select id="getServiceClassId" resultType="Long">
+        select service_class_id from base_service_type where service_type_id = #{serviceTypeId}
+    </select>
+
+</mapper>

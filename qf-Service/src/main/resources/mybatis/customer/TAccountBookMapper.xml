@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.customer.mapper.TAccountBookMapper">
+
+    <resultMap type="TAccountBook" id="TAccountBookResult">
+        <result property="bookId"    column="book_id"    />
+        <result property="customerId"    column="customer_id"    />
+        <result property="customerName"    column="customer_name"    />
+        <result property="taxType"    column="tax_type"    />
+        <result property="bookkeepingAccounting"    column="bookkeeping_accounting"    />
+        <result property="supervisorName"    column="supervisor_name"    />
+        <result property="status"    column="status"    />
+        <result property="accountingAssistant"    column="accounting_assistant"    />
+        <result property="voucherCount"    column="voucher_count"    />
+        <result property="createPeriod"    column="create_period"    />
+        <result property="currentPeriod"    column="current_period"    />
+        <result property="serverStatus"    column="server_status" />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <select id="selectListBook"  parameterType="TAccountBookVo" resultType="TAccountBookVo">
+         SELECT c.*,
+        (SELECT u.user_name from sys_user u where u.user_id = c.manager_accounting_user_id ) manager_accounting ,
+        (SELECT u.user_name from sys_user u where u.user_id = c.bookkeeping_accounting_user_id ) bookkeeping_accounting ,
+        (SELECT u.user_name from sys_user u where u.user_id = c.assistant_accounting_user_id ) assistant_accounting
+        FROM t_account_book c where c.is_del = 0 and c.status = 0
+        <if  test="serverStatus != null">
+            and c.server_status = #{serverStatus}
+        </if>
+        <if  test="customerName != null and customerName != ''">
+            and c.customer_name like CONCAT('%',#{customerName},'%')
+        </if>
+        <if  test="vatType != null">
+            and c.vat_type = #{vatType}
+        </if>
+        <if  test="createPeriod != null">
+            and date_format(c.create_period,'%Y-%m') = date_format(#{createPeriod},'%Y-%m')
+        </if>
+        <if  test="currentPeriod != null">
+            and c.current_period = #{currentPeriod}
+        </if>
+        <if  test="bookkeepingAccountingUserId != null">
+            and (c.bookkeeping_accounting_user_id = #{bookkeepingAccountingUserId} or c.assistant_accounting_user_id = #{bookkeepingAccountingUserId})
+        </if>
+        <if  test="deptId != null and deptId != 0">
+            and c.dept_id = #{deptId}
+        </if>
+        order by create_time DESC
+    </select>
+
+    <select id="selectByCustomerId" resultType="TAccountBook">
+        select * from t_account_book where is_del = 0 and customer_id = #{customerId}
+    </select>
+
+
+    <select id="getAccountTemplate" resultType="BookAccountTemplateVo">
+        SELECT * FROM `book_account_template` where status = 1
+    </select>
+
+    <select id="getIndexData" resultType="com.qifu.project.commerce.domain.vo.StatisticalData">
+        SELECT
+        count( book.book_id ) amount,
+        sum( CASE WHEN book.book_count = 0 THEN 1 ELSE 0 END ) unfinished,
+        (
+        SELECT
+        COUNT( col.id )
+        FROM
+        t_collection col
+        WHERE
+        col.service_class_id = 1
+        AND col.is_del = 0
+        AND col.is_end = 0
+        <if test="deptId != null and deptId != '' ">
+            AND col.dept_id = #{deptId}
+        </if>
+        <if test="type != null and type == 'month' ">
+            AND DATE_FORMAT( col.create_time, '%Y%m' ) = DATE_FORMAT( CURDATE( ), '%Y%m' )
+        </if>
+        ) uncleared
+        FROM
+        t_account_book book
+        <where>
+            is_del = 0
+            <if test="deptId != null and deptId != '' ">
+                AND book.dept_id = #{deptId}
+            </if>
+            <if test="type != null and type == 'month' ">
+                AND DATE_FORMAT( book.create_time, '%Y%m' ) = DATE_FORMAT( CURDATE( ), '%Y%m' )
+            </if>
+        </where>
+    </select>
+
+    <update id="deleteByCustomerId" parameterType="Long">
+        UPDATE t_account_book SET is_del = 2 WHERE customer_id in
+        <foreach collection="array" item="customerId" open="(" separator="," close=")">
+            #{customerId}
+        </foreach>
+    </update>
+
+    <select id="selectAccountBookStatusByDeptId" parameterType="Long" resultType="AccountBookVoTwo">
+        SELECT
+            sum( CASE WHEN book_count = 1 and `status` = 0 AND is_del = 0 THEN 1 ELSE 0 END ) AS occupied,
+            sum( CASE WHEN book_count = 1 and `status` = 1 AND is_del = 0 THEN 1 ELSE 0 END ) AS disable,
+            sum( CASE WHEN is_del = 2 THEN 1 ELSE 0 END ) AS recycled
+        FROM
+            t_account_book
+        WHERE
+            dept_id = #{deptId}
+    </select>
+
+</mapper>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.accountBook.mapper.DetailAccountMapper">
+
+    <select id="getSubjectList" parameterType="ParamsVo" resultType="SubjectVo">
+        SELECT * from (
+        <foreach collection="SUBJECT_CODE_RULE" index="index" item="codeNum" separator="union all">
+            SELECT subject_id,name subjectName,code subjectCode,CONCAT(code,' ',full_name) subjectNameBy,`level` from book_subject where  code in(
+            SELECT LEFT(bs.code,#{codeNum}) FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId} and bv.year_period &gt;= #{startPeriod} and bv.year_period &lt;= #{endPeriod}
+            GROUP BY LEFT(bs.code,#{codeNum})
+            ) and book_id = #{bookId} and `level` = #{index}+1
+        </foreach>
+        UNION ALL
+        SELECT bs.subject_id,bs.name subjectName,bs.code subjectCode,CONCAT(bs.code,' ',bs.full_name) subjectNameBy,bs.`level` from book_subject_period bsp
+        LEFT JOIN book_subject bs on bs.subject_id = bsp.subject_id
+        where bs.book_id = #{bookId} and date_format(bsp.year_period, '%Y %m') >= date_format(DATE_SUB(#{startPeriod}, INTERVAL 1 MONTH),'%Y %m')
+        and YEAR(bsp.year_period) &lt;= YEAR(#{endPeriod}) and bsp.year_period &lt;= #{endPeriod} and bsp.period_end_balance != 0
+        )a where 1=1
+        <if test="startLevel != null">
+            and a.level >= #{startLevel}
+        </if>
+        <if test="endLevel != null">
+            and a.level &lt;= #{endLevel}
+        </if>
+        GROUP BY a.subject_id order BY a.subjectCode
+    </select>
+
+    <!--根据当前账期-本期发生额明细-->
+    <select id="getListByPeriod" parameterType="ParamsVo" resultType="DetailAccount">
+        SELECT bv.year_period,bv.voucher_date,bv.voucher_code,bv.voucher_id,bvr.summary,
+        IFNULL(SUM(bvr.debit),0) debit_total,IFNULL(SUM(bvr.credit),0) credit_total
+        FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        where bvr.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        <if test="currentPeriod">
+            and bv.year_period = #{currentPeriod}
+        </if>
+        GROUP BY bv.year_period,bv.voucher_date,bv.voucher_code,bv.voucher_id,bvr.summary
+    </select>
+
+    <!--根据当前账期-期初余额-->
+    <select id="selectPeriodInitBalance" parameterType="ParamsVo" resultType="DetailAccount">
+        SELECT '期初余额'summary,bsp.period_end_balance balance
+        from book_subject_period bsp
+        where bsp.subject_id = #{subjectId} and bsp.year_period = #{currentPeriod}
+    </select>
+
+    <!--根据当前账期-本期合计-->
+    <select id="monthBalanceByPeriod" parameterType="ParamsVo" resultType="DetailAccount">
+        SELECT '本期合计'summary,IFNULL(SUM(bvr.debit),0) debit_total,IFNULL(SUM(bvr.credit),0) credit_total  FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        where bvr.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        <if test="currentPeriod">
+            and bv.year_period = #{currentPeriod}
+        </if>
+    </select>
+
+    <!--根据当前账期-本年累计-->
+    <select id="yearBalanceByPeriod" parameterType="ParamsVo" resultType="DetailAccount">
+        SELECT '本年累计'summary, IFNULL(SUM(bvr.debit),0) debit_total,IFNULL(SUM(bvr.credit),0) credit_total  FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        where bvr.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        <if test="currentPeriod">
+            and bv.year_period &lt;= #{currentPeriod} and YEAR(year_period) = YEAR(#{currentPeriod})
+        </if>
+    </select>
+
+
+</mapper>

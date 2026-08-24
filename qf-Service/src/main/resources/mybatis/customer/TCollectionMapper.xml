@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.customer.mapper.TCollectionMapper">
+
+    <resultMap type="TCollection" id="TCollectionResult">
+        <result property="id" column="id"/>
+        <result property="contractId" column="contract_id"/>
+        <result property="total" column="total"/>
+        <result property="amount" column="amount"/>
+        <result property="debt" column="debt"/>
+        <result property="isEnd" column="is_end"/>
+        <result property="isNotice" column="is_notice"/>
+        <result property="isWarning" column="is_warning"/>
+        <result property="lastPayDate" column="last_pay_date"/>
+        <result property="createTime" column="create_time"/>
+        <result property="serviceClassId" column="service_class_id"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectTCollection">
+        id,contract_id,total,amount,debt,is_end,is_notice,is_warning,last_pay_date,create_time,service_class_id,remark
+    </sql>
+
+    <select id="collectionList" parameterType="CollectionVo" resultType="CollectionVo">
+        SELECT col.id,col.contract_id,col.total,col.amount,col.debt,col.is_end,col.is_notice,
+        col.last_pay_date,col.create_time,col.service_class_id,col.remark,(
+        CASE
+        WHEN col.debt = 0 THEN
+        '正常'
+        ELSE (
+        CASE
+        WHEN ctr.pay_type = 1 THEN
+        (
+        CASE
+        WHEN DATEDIFF( ctr.contract_start_date, NOW( ) ) &lt;= 7 AND DATEDIFF( ctr.contract_start_date, NOW( ) ) > 0 THEN
+        '即将到期'
+        WHEN ctr.contract_start_date &lt; NOW( ) THEN
+        '已经欠费'
+        ELSE '正常'
+        END
+        ) ELSE (
+        CASE
+        WHEN DATEDIFF( col.last_pay_date, NOW( ) ) &lt;= 7 AND DATEDIFF( col.last_pay_date, NOW( ) ) > 0 THEN
+        '即将到期'
+        WHEN col.last_pay_date &lt; NOW( ) THEN
+        '已经欠费'
+        ELSE '正常'
+        END
+        )
+        END
+        )
+        END
+        ) is_warning,
+        (SELECT user_name from sys_user where user_id = cus.bookkeeping_accounting_user_id) bookkeepingAccounting,
+        ctr.pay_type,cus.customer_name,ctr.contract_no,ctr.status
+        FROM `t_collection` col
+        LEFT JOIN t_contract ctr on col.contract_id = ctr.contract_id
+        LEFT JOIN t_customer cus on cus.id = ctr.customer_id
+        where 1 = 1
+        <if test="isWarning != null and isWarning != ''">
+            AND col.is_warning = #{isWarning}
+        </if>
+        <if test="year != null and month != null">
+            AND YEAR(col.last_pay_date) = #{year} and MONTH(col.last_pay_date) = #{month}
+        </if>
+        <if test="serviceClassId != null">
+            AND col.service_class_id = #{serviceClassId}
+        </if>
+        <if test="deptId != null">
+            AND col.dept_id = #{deptId}
+        </if>
+        <if test="customerName != null and customerName != ''">
+            AND cus.customer_name LIKE CONCAT('%',#{customerName},'%')
+        </if>
+        <if test="isEnd != null">
+            AND col.is_end = #{isEnd}
+        </if>
+        <if test="isDel != null ">
+            AND col.is_del = #{isDel}
+        </if>
+        <if test="contractNo !=null and contractNo != '' ">
+            AND ctr.contract_no like concat('%', #{contractNo}, '%')
+        </if>
+        ORDER BY col.id DESC
+    </select>
+
+    <update id="deleteBycontractIds" parameterType="Long">
+        UPDATE t_collection SET is_del=2 WHERE contract_id IN
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="selectById" resultMap="TCollectionResult" parameterType="Long">
+        SELECT
+        <include refid="selectTCollection"></include>
+        FROM
+        t_collection
+        WHERE
+        is_del = 0 and id = #{id}
+    </select>
+
+</mapper>

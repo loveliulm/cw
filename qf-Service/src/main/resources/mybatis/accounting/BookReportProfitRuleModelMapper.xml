@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportProfitRuleModelMapper">
+
+    <resultMap type="BookReportProfitRuleModel" id="BookReportProfitRuleModelResult">
+        <result property="id"    column="id"    />
+        <result property="subjectCode"    column="subject_code"    />
+        <result property="subject"    column="subject"    />
+        <result property="sign"    column="sign"    />
+        <result property="dataRule"    column="data_rule"    />
+        <result property="profitId"    column="profit_id"    />
+    </resultMap>
+
+    <select id="getListByProfitId" resultType="BookReportProfitRuleModel">
+        SELECT * from book_report_profit_rule_model where profit_id = #{profitId}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookSubjectPeriodMapper">
+
+    <resultMap type="BookSubjectPeriod" id="BookSubjectPeriodResult">
+        <result property="id"    column="id"    />
+        <result property="subjectId"    column="subject_id"    />
+        <result property="periodInitBalance"    column="period_init_balance"    />
+        <result property="periodEndBalance"    column="period_end_balance"    />
+        <result property="yearPeriod"    column="year_period"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <!--获取账期对应得科目-->
+    <select id="selectByPeriod" resultType="BookSubjectPeriod">
+        SELECT * from book_subject_period where subject_id = #{subjectId} and year_period = #{period} and del_flag = '0'
+    </select>
+
+    <!--结转科目-->
+    <insert id="insertListByPeriod">
+        INSERT INTO book_subject_period (subject_id,period_init_balance,period_end_balance,year_period,create_time,update_time)
+        SELECT subject_id,
+        IFNULL((SELECT bsp.period_end_balance from book_subject_period bsp where bsp.year_period = #{previousPeriod} and bsp.subject_id = bs.subject_id),bs.balance_init),
+        balance,#{period},NOW(),NOW() FROM book_subject bs WHERE bs.book_id = #{bookId}
+    </insert>
+
+    <!--科目结账：修改当前账期金额-->
+    <update id="updateBalanceByPeriod">
+        UPDATE book_subject_period SET period_end_balance = period_end_balance + #{diffMoney} where subject_id = #{subjectId} and year_period = #{yearPeriod}
+    </update>
+
+    <!--科目结账：修改之后账期金额-->
+    <update id="updateBalanceByAfterPeriod">
+        UPDATE book_subject_period SET period_init_balance = period_init_balance + #{diffMoney}, period_end_balance = period_end_balance + #{diffMoney} where subject_id = #{subjectId} and year_period > #{yearPeriod}
+    </update>
+
+    <select id="selectListPeriodByBookId" resultType="BookSubjectPeriod">
+        SELECT bsp.* from book_subject_period bsp
+        LEFT JOIN book_subject bs on bs.subject_id = bsp.subject_id
+        WHERE bs.subject_id = #{subjectId}
+        <if test="yearPeriod != null">
+            and year_period >= #{yearPeriod}
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.voucher.mapper.BookVoucherMapper">
+
+    <resultMap type="BookVoucherVo" id="BookVoucherResult">
+        <result property="voucherId"    column="voucher_id"    />
+        <result property="bookId"    column="book_id"    />
+        <result property="voucherWord"    column="voucher_word"    />
+        <result property="voucherNo"    column="voucher_no"    />
+        <result property="voucherCode"    column="voucher_code"    />
+        <result property="voucherDate"    column="voucher_date"    />
+        <result property="yearPeriod"    column="year_period"    />
+        <result property="creditTotal"    column="credit_total"    />
+        <result property="debitTotal"    column="debit_total"    />
+        <result property="totalAmount"    column="total_amount"    />
+        <result property="attachmentCount"    column="attachment_count"    />
+        <result property="voucherType"    column="voucher_type"    />
+        <result property="createUserName"    column="create_user_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="createUserId"    column="create_user_id"    />
+        <result property="status"    column="status"    />
+        <collection  property="details"   javaType="java.util.List"        resultMap="BookVoucherRecordVoResult" />
+    </resultMap>
+
+
+    <resultMap id="BookVoucherRecordVoResult" type="BookVoucherRecordVo">
+        <id     property="voucherRecordId"   column="voucherRecord_id"     />
+        <result property="voucherId" column="voucher_id"   />
+        <result property="summary" column="summary"   />
+        <result property="subjectId" column="subject_id"   />
+        <result property="subjectName"   column="subjectName"      />
+        <result property="subjectNameBy"   column="subjectNameBy"      />
+        <result property="balanceDirection"   column="balance_direction"      />
+        <result property="balanceDirectionText"   column="balance_direction_text"      />
+        <result property="credit"    column="credit"    />
+        <result property="debit"    column="debit"    />
+        <result property="price"   column="price"      />
+        <result property="quantity"   column="quantity"      />
+        <result property="rete"   column="rete"      />
+        <result property="currentcy"   column="currentcy"      />
+        <result property="currencyCode"   column="currencyCode"      />
+        <result property="subjectName"   column="subject_name"      />
+        <result property="subjectName"   column="subject_name"      />
+        <result property="status"   column="dept_status" />
+    </resultMap>
+
+
+
+    <select id="getList" resultMap="BookVoucherResult">
+        select DISTINCT bv.* from book_voucher bv
+        LEFT JOIN book_voucher_record bvr on bvr.voucher_id = bv.voucher_id
+        where bv.del_flag = '0' and bvr.del_flag = '0'
+        <if test="params.voucherCode != null and params.voucherCode != ''">
+            and bv.voucher_code like concat('%',#{params.voucherCode},'%')
+        </if>
+        <if test="params.startDate != null">
+            and bv.year_period &gt;= #{params.startDate}
+        </if>
+        <if test="params.endDate != null">
+            and bv.year_period &lt;= #{params.endDate}
+        </if>
+        <if test="params.bookId != null">
+            and bv.book_id = #{params.bookId}
+        </if>
+        <if test="params.subjectId != null">
+            and bvr.subject_id = #{params.subjectId}
+        </if>
+        <if test="params.auxiliary != null and params.auxiliary != ''">
+            and ${params.auxiliary}
+        </if>
+        <if test="params.smallMoney != null">
+            and bv.credit_total &gt;= #{params.smallMoney}
+        </if>
+        <if test="params.bigMoney != null">
+            and bv.credit_total &lt;= #{params.bigMoney}
+        </if>
+        <if test="params.summary != null and params.summary != ''">
+            and bvr.summary like concat('%',#{params.summary},'%')
+        </if>
+        <if test="params.voucherIds != null">
+             and
+            <foreach collection="params.voucherIds" item="id" open="(" separator="or" close=")">
+                bv.voucher_id = #{id}
+            </foreach>
+        </if>
+        order by bv.voucher_date
+        <if test="params.order != null and params.order != '' and params.order == 'desc'">
+            ${params.order}
+        </if>
+        ,bv.create_time
+        <if test="params.order != null and params.order != '' and params.order == 'desc'">
+            ${params.order}
+        </if>
+        limit #{page.pageStart},#{page.pageSize}
+    </select>
+
+    <select id="getListTotal" parameterType="BookVoucherParams" resultType="int">
+        select count(DISTINCT bv.voucher_id) from book_voucher bv
+        LEFT JOIN book_voucher_record bvr on bvr.voucher_id = bv.voucher_id
+        where bv.del_flag = '0' and bvr.del_flag = '0'
+        <if test="voucherCode != null and voucherCode != ''">
+            and bv.voucher_code like concat('%',#{voucherCode},'%')
+        </if>
+        <if test="startDate != null">
+            and bv.year_period &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            and bv.year_period &lt;= #{endDate}
+        </if>
+        <if test="bookId != null">
+            and bv.book_id = #{bookId}
+        </if>
+        <if test="subjectId != null">
+            and bvr.subject_id = #{subjectId}
+        </if>
+        <if test="auxiliary != null and auxiliary != ''">
+            and ${auxiliary}
+        </if>
+        <if test="smallMoney != null">
+            and bv.credit_total &gt;= #{smallMoney}
+        </if>
+        <if test="bigMoney != null">
+            and bv.credit_total &lt;= #{bigMoney}
+        </if>
+        <if test="voucherIds != null">
+            and
+            <foreach collection="voucherIds" item="id" open="(" separator="or" close=")">
+                bv.voucher_id = #{id}
+            </foreach>
+        </if>
+        order by bv.voucher_date
+        <if test="order != null and order != '' and order == 'desc'">
+            ${order}
+        </if>
+        <if test="summary != null and summary != ''">
+            and bvr.summary like concat('%',#{summary},'%')
+        </if>
+    </select>
+
+    <select id="getDebitTotal" resultType="BigDecimal">
+        SELECT IFNULL(SUM(bvr.debit),0) FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher  bv ON bvr.voucher_id = bv.voucher_id
+        LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+        where  bv.year_period = #{yearPeriod} and bv.book_id = #{bookId} and bs.code like CONCAT(#{subjectCode},'%') and bv.del_flag = '0' and bvr.del_flag = '0';
+     </select>
+
+    <select id="getCreditTotal" resultType="BigDecimal">
+        SELECT IFNULL(SUM(bvr.credit),0) FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher  bv ON bvr.voucher_id = bv.voucher_id
+        LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+        where  bv.year_period = #{yearPeriod} and bv.book_id = #{bookId} and bs.code like CONCAT(#{subjectCode},'%') and bv.del_flag = '0' and bvr.del_flag = '0';
+     </select>
+
+    <!--结转损益收入-->
+    <select id="getCarryForwardCreditBalance" resultType="BigDecimal">
+        SELECT IFNULL(SUM(IFNULL(bvr.credit,0)) - SUM(IFNULL(bvr.debit,0)),0) FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        LEFT JOIN book_subject_type bst on bs.type_id = bst.type_id
+        where bs.book_id = #{bookId} and bst.`name` = '损益' and bv.year_period = #{period} and bs.balance_direction = 'CREDIT' and bv.del_flag = '0' and bvr.del_flag = '0'
+    </select>
+
+    <!--结转损益成本-->
+    <select id="getCarryForwardDebitBalance" resultType="BigDecimal">
+        SELECT IFNULL(SUM(IFNULL(bvr.debit,0)) - SUM(IFNULL(bvr.credit,0)),0) FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        LEFT JOIN book_subject_type bst on bs.type_id = bst.type_id
+        where bs.book_id = #{bookId} and bst.`name` = '损益' and bv.year_period = #{period} and bs.balance_direction = 'DEBIT' and bv.del_flag = '0' and bvr.del_flag = '0'
+    </select>
+
+    <!--结转损益收入涉及的科目凭证  贷方-->
+    <select id="getCarryForwardCreditVoucherRecords" resultType="BookVoucherRecord">
+        SELECT
+        '结转损益' summary,bvr.subject_id,'DEBIT' balance_direction,'借' balance_direction_text,
+        IFNULL(SUM(IFNULL(bvr.credit,0)) - SUM(IFNULL(bvr.debit,0)),0) DEBIT,bvr.supplier_id,bvr.customer_id,
+        bvr.project_id,bvr.department_id,bvr.person_id,bvr.stock_id
+        from `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        LEFT JOIN book_subject_type bst on bs.type_id = bst.type_id
+        where bs.book_id = #{bookId} and bst.`name` = '损益' and bv.year_period = #{period} and bs.balance_direction = 'CREDIT' and bv.del_flag = '0' and bvr.del_flag = '0'
+        GROUP BY bvr.subject_id,balance_direction,balance_direction_text,bvr.supplier_id,bvr.customer_id,bvr.project_id,bvr.department_id,bvr.person_id,bvr.stock_id
+    </select>
+
+    <!--结转损益成本涉及的科目凭证  借方-->
+    <select id="getCarryForwardDebitVoucherRecords" resultType="BookVoucherRecord">
+        SELECT
+        '结转损益' summary,bvr.subject_id,'CREDIT' balance_direction,'贷' balance_direction_text,
+        IFNULL(SUM(IFNULL(bvr.debit,0)) - SUM(IFNULL(bvr.credit,0)),0) credit,bvr.supplier_id,bvr.customer_id,
+        bvr.project_id,bvr.department_id,bvr.person_id,bvr.stock_id
+        from `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        LEFT JOIN book_subject_type bst on bs.type_id = bst.type_id
+        where bs.book_id = #{bookId} and bst.`name` = '损益' and bv.year_period = #{period} and bs.balance_direction = 'DEBIT' and bv.del_flag = '0' and bvr.del_flag = '0'
+        GROUP BY bvr.subject_id,balance_direction,balance_direction_text,bvr.supplier_id,bvr.customer_id,bvr.project_id,bvr.department_id,bvr.person_id,bvr.stock_id
+    </select>
+
+
+    <select id="getListByCarryoverId" resultType="BookVoucher">
+        SELECT * from book_voucher where del_flag = '0'
+        <if test="typeClassId != null">
+            and type_class_id = #{typeClassId}
+        </if>
+        <if test="voucherType != null">
+            and voucher_type = #{voucherType}
+        </if>
+        <if test="bookId != null">
+            and book_id = #{bookId}
+        </if>
+        <if test="yearPeriod != null">
+            and year_period = #{yearPeriod}
+        </if>
+    </select>
+
+    <select id="getTotalByPeriod" resultType="Integer">
+        select count(1) from book_voucher where del_flag = '0' and book_id = #{bookId} and year_period = #{period}
+    </select>
+
+    <select id="getCarryForwardBalance" resultType="BigDecimal">
+        SELECT IFNULL(SUM(bvr.credit),0)-IFNULL(SUM(bvr.debit),0) from book_voucher_record bvr
+        LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+        where bvr.del_flag = '0' and bv.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where `name` = '本年利润' and book_id = #{bookId}) ,'%')
+        and bv.year_period = #{yearPeriod}
+    </select>
+</mapper>

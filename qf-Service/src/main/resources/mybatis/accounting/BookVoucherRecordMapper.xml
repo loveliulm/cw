@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.voucher.mapper.BookVoucherRecordMapper">
+
+    <resultMap type="BookVoucherRecord" id="BookVoucherRecordResult">
+        <result property="voucherRecordId"    column="voucher_record_id"    />
+        <result property="voucherId"    column="voucher_id"    />
+        <result property="summary"    column="summary"    />
+        <result property="subjectId"    column="subject_id"    />
+        <result property="balanceDirection"    column="balance_direction"    />
+        <result property="balanceDirectionText"    column="balance_direction_text"    />
+        <result property="debit"    column="debit"    />
+        <result property="credit"    column="credit"    />
+        <result property="price"    column="price"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="supplierId"    column="supplier_id"    />
+        <result property="customerId"    column="customer_id"    />
+        <result property="projectId"    column="project_id"    />
+        <result property="departmentId"    column="department_id"    />
+        <result property="personId"    column="person_id"    />
+        <result property="rete"    column="rete"    />
+        <result property="currentcy"    column="currentcy"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <select id="selectListByVoucherId" resultType="BookVoucherRecord">
+        select * from book_voucher_record where voucher_id = #{voucherId} and del_flag = '0' and (debit != 0 or credit != 0)
+    </select>
+
+    <select id="ListByVoucherId" resultType="BookVoucherRecordVo">
+        select vr.*,bs.name subjectName,concat(bs.code,' ',bs.full_name) subjectNameBy from book_voucher_record vr
+        left join book_subject bs on bs.subject_id = vr.subject_id
+        where vr.voucher_id = #{voucherId} and vr.del_flag = '0' and (vr.debit != 0 or vr.credit != 0)
+    </select>
+
+    <update id="updateSubjectId">
+        update book_voucher_record set subject_id = #{subjectId},update_time = now() where subject_id = #{fatherSubjectId} and del_flag = '0'
+    </update>
+
+    <select id="haveVoucherBySubject" resultType="int">
+        SELECT count(*) from book_voucher_record bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        where bvr.del_flag = '0'
+        and bs.subject_id = #{subjectId}
+    </select>
+
+</mapper>

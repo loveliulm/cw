@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookConfigMapper">
+
+    <resultMap type="BookConfig" id="BookConfigResult">
+        <result property="configId"    column="config_id"    />
+        <result property="bookId"    column="book_id"    />
+        <result property="type"    column="type"    />
+        <result property="key"    column="key"    />
+        <result property="value"    column="value"    />
+        <result property="remark"    column="remark"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectConfigVo">
+        select config_id,book_id, `type`, `key`, `value`, remark, create_time
+		from book_config
+    </sql>
+
+
+    <insert id="initInsertConfig">
+        INSERT into book_config
+        ( book_id,`type`,`key`,remark,create_time,`value`)
+        SELECT
+        #{bookId},`type`,`key`,remark,NOW(),
+        (SELECT subject_id from book_subject where book_id =  #{bookId} and `code` = `value`)
+        from book_config_model
+        where template_id = #{templateId}
+    </insert>
+
+    <select id="selectBookConfig" parameterType="BookConfig" resultType="BookConfig">
+        <include refid="selectConfigVo"/>
+        <where>
+            <if test="configId != null">
+                and config_id = #{configId}
+            </if>
+            <if test="key != null and key != ''">
+                and key = #{key}
+            </if>
+            <if test="bookId != null">
+                and book_id = #{bookId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectBookConfigList" parameterType="BookConfig" resultType="BookConfig">
+        <include refid="selectConfigVo"/>
+        <where>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+            <if test="key != null and key != ''">
+                AND key like concat('%', #{key}, '%')
+            </if>
+            <if test="bookId != null">
+                and book_id = #{bookId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectConfigByBookId" parameterType="BookConfig" resultType="BookConfigVo">
+            select config_id,book_id, `type`, `key`, `value` subjectId, remark, create_time,
+            (SELECT CONCAT(bs.`code`,' ',bs.full_name) from book_subject bs where bs.subject_id = subjectId) subject_by
+            from book_config
+            <where>
+                <if test="type != null and type != ''">
+                    AND type = #{type}
+                </if>
+                <if test="key != null and key != ''">
+                    AND key like concat('%', #{key}, '%')
+                </if>
+                <if test="bookId != null">
+                    and book_id = #{bookId}
+                </if>
+            </where>
+    </select>
+
+</mapper>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.voucher.mapper.BookVoucherModelRecordMapper">
+
+    <resultMap type="BookVoucherModelRecord" id="BookVoucherModelRecordResult">
+        <result property="modelRecordId"    column="model_record_id"    />
+        <result property="modelId"    column="model_id"    />
+        <result property="summary"    column="summary"    />
+        <result property="subjectId"    column="subject_id"    />
+        <result property="balanceDirection"    column="balance_direction"    />
+        <result property="balanceDirectionText"    column="balance_direction_text"    />
+        <result property="debit"    column="debit"    />
+        <result property="credit"    column="credit"    />
+        <result property="price"    column="price"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="supplierId"    column="supplier_id"    />
+        <result property="customerId"    column="customer_id"    />
+        <result property="projectId"    column="project_id"    />
+        <result property="departmentId"    column="department_id"    />
+        <result property="personId"    column="person_id"    />
+        <result property="rete"    column="rete"    />
+        <result property="currentcy"    column="currentcy"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="delFlag"    column="del_flag"    />
+    </resultMap>
+
+    <select id="selectListByModelId" resultType="BookVoucherModelRecordVo">
+        SELECT vr.*,bs.name subjectName,concat(bs.code,' ',bs.full_name) subjectNameBy from book_voucher_model_record vr
+        left join book_subject bs on bs.subject_id = vr.subject_id
+        where vr.model_id = #{modelId}
+    </select>
+
+    <insert id="InitInsertList">
+        insert into book_voucher_model_record
+        (model_id,summary,subject_id,balance_direction,balance_direction_text,create_time,update_time,filed_code,filed_text)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{modelId},
+            #{item.summary},
+            (SELECT subject_id from book_subject where book_id = #{bookId} and code = #{item.subjectCode}),
+            #{item.balanceDirection},
+            #{item.balanceDirectionText},
+            NOW(),
+            NOW(),
+            #{item.filedCode},
+            #{item.filedText}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectWageRecordListByModelId" resultType="BookVoucherModelWageRecordVo">
+        SELECT vr.*,bs.name subjectName,concat(bs.code,' ',bs.full_name) subjectNameBy from book_voucher_model_record vr
+        left join book_subject bs on bs.subject_id = vr.subject_id
+        where vr.model_id = #{modelId} and del_flag = '0'
+    </select>
+
+    <update id="deleteOldVoucherModelWage">
+        update book_voucher_model_record set  del_flag = '2' where model_id = #{modelId}
+    </update>
+
+
+</mapper>

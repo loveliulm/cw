@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.park.mapper.ParkAddressMapper">
+    <insert id="doParkContract">
+        insert into park_address_contract values (#{id}, #{contractId})
+    </insert>
+
+    <delete id="deleteParkContract">
+        delete from park_address_contract where sys_park_address_id = #{id}
+    </delete>
+
+    <select id="selectParkAddressContract" resultType="java.lang.Long">
+        select contract_id from park_address_contract
+    </select>
+
+    <select id="getContractId" resultType="java.lang.Long">
+        select contract_id from park_address_contract where sys_park_address_id = #{id}
+    </select>
+
+</mapper>
