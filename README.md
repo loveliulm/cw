@@ -9,6 +9,10 @@
 软件架构说明
 
 
+
+技术交流群
+扫码添加客服进群
+
 #### 安装教程
 
 1.  xxxx
@@ -28,6 +32,44 @@
 3.  提交代码
 4.  新建 Pull Request
 
+
+## 🤝 社区
+
+**遇到问题？想交流技术？下载预编译客户端？来这里：**
+
+<table align="center">
+  <tr>
+    <td align="center" width="33%">
+      <img src="./images/qq_qrcode.png" width="180" height="180" alt="QQ群二维码"/><br>
+      <b>🐧 QQ 群：1047993501</b>
+    </td>
+    <td align="center" width="33%">
+      <img src="./images/wx_qun_qrcode.png" width="180" height="180" alt="微信群二维码"/><br>
+      <b>💬 微信群</b>
+    </td>
+    <td align="center" width="33%">
+      <img src="./images/wx_public_qrcode.jpeg" width="180" height="180" alt="公众号二维码"/><br>
+      <b>📱 公众号：冬瓜编程实验室</b>
+    </td>
+  </tr>
+</table>
+
+<p align="center" style="margin-top: 30px;">
+  <a href="https://gitee.com/qi-wanhui/financial-software"><b>⭐ 点个 Star 支持项目</b></a>（你的鼓励是持续更新的动力 ❤️）
+</p>
+
+---
+
+## 📄 许可证
+
+本项目基于 [MIT License](LICENSE) 开源，可自由使用、修改和商用。
+
+---
+
+<p align="center">
+  <b>如果 GuaDa 对你有帮助，欢迎在 Gitee 上点个 Star ⭐</b><br>
+  <sub>你的每一次 Star，都是让这个项目变得更好的动力</sub>
+</p>
 
 #### 特技
 
