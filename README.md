@@ -40,12 +40,12 @@
 <table align="center">
   <tr>
     <td align="center" width="33%">
-      <img src="./images/wx_qun_qrcode.png" width="180" height="180" alt="微信群二维码"/><br>
+      <img src="![输入图片说明](.gitee/%E4%BA%8C%E7%BB%B4%E7%A0%81.png)" width="180" height="180" alt="微信群二维码"/><br>
       <b>💬 微信群</b>
     </td>
     <td align="center" width="33%">
       <img src="./images/wx_public_qrcode.jpeg" width="180" height="180" alt="公众号二维码"/><br>
-      <b>📱 公众号：冬瓜编程实验室</b>
+      <b>📱 公众号：企万慧</b>
     </td>
   </tr>
 </table>
@@ -57,7 +57,7 @@
 ---
 
 <p align="center">
-  <b>如果 GuaDa 对你有帮助，欢迎在 Gitee 上点个 Star ⭐</b><br>
+  <b>如果 企万慧对你有帮助，欢迎在 Gitee 上点个 Star ⭐</b><br>
   <sub>你的每一次 Star，都是让这个项目变得更好的动力</sub>
 </p>
 
