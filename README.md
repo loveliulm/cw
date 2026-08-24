@@ -40,7 +40,7 @@
 <table align="center">
   <tr>
     <td align="center" width="33%">
-      <img src="![输入图片说明](.gitee/%E4%BA%8C%E7%BB%B4%E7%A0%81.png)" width="180" height="180" alt="微信群二维码"/><br>
+      <img src="![二维码](.gitee/%E4%BA%8C%E7%BB%B4%E7%A0%81.png)" width="180" height="180" alt="微信群二维码"/><br>
       <b>💬 微信群</b>
     </td>
     <td align="center" width="33%">
