@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookSubjectPeriodTemporaryMapper">
+
+    <!--获取账期对应得科目-->
+    <select id="selectByPeriod" resultType="BookSubjectPeriodTemporary">
+        SELECT * from book_subject_period_temporary where subject_id = #{subjectId} and year_period = #{period} and del_flag = '0'
+    </select>
+
+    <insert id="insertList">
+        INSERT INTO book_subject_period_temporary (subject_id,period_balance,year_period,create_time,update_time)
+        SELECT subject_id,balance,#{period},NOW(),NOW() FROM book_subject bs WHERE bs.book_id = #{bookId}
+    </insert>
+
+    <update id="deletes">
+        update book_subject_period_temporary bspt
+        left join book_subject bs on bs.subject_id = bspt.subject_id
+        set del_flag = '2'
+        where bspt.year_period = #{period} and bs.book_id = #{bookId}
+    </update>
+
+    <!--科目结账：修改之后账期金额-->
+    <update id="updateBalanceByAfterPeriod">
+        UPDATE book_subject_period_temporary SET  period_balance = period_balance + #{diffMoney} where subject_id = #{subjectId} and year_period > #{yearPeriod}
+    </update>
+
+
+</mapper>

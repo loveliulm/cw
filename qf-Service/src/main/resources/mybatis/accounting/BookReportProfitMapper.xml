@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportProfitMapper">
+
+    <resultMap type="BookReportProfit" id="BookReportProfitResult">
+        <result property="id"    column="id"    />
+        <result property="bookId"    column="book_id"    />
+        <result property="profitName"    column="profit_name"    />
+        <result property="rowNum"    column="row_num"    />
+        <result property="level"    column="level"    />
+        <result property="isRule"    column="is_rule"    />
+        <result property="profitTitle"    column="profit_title"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <select id="getList" parameterType="ReportProfitParams"  resultType="BookReportProfit">
+        SELECT * from book_report_profit where book_id = #{bookId}
+    </select>
+
+    <select id="endBalance" parameterType="ReportProfitParams" resultType="BigDecimal">
+        SELECT   IFNULL(bsp.period_end_balance,0)
+        from book_subject_period bsp
+	    LEFT JOIN book_subject bs on bs.subject_id = bsp.subject_id
+        where bs.code = #{subjectCode} and bsp.year_period = #{currentPeriod} and bs.book_id = #{bookId} and bsp.del_flag = '0'
+    </select>
+
+    <select id="yearInitBalance" parameterType="ReportProfitParams" resultType="BigDecimal">
+        SELECT   IFNULL(bsp.period_end_balance,0)
+        from book_subject_period bsp
+	    LEFT JOIN book_subject bs on bs.subject_id = bsp.subject_id
+        where bs.code = #{subjectCode} and bsp.year_period = #{lastYearPeriod} and bs.book_id = #{bookId} and bsp.del_flag = '0'
+    </select>
+
+
+    <select id="getSubjectInitHappen" parameterType="ReportProfitParams" resultType="BigDecimal">
+        SELECT IF(balance_direction='DEBIT',IFNULL(debit,0),IFNULL(credit,0)) from book_subject where code = #{subjectCode} and book_id = #{bookId}
+    </select>
+
+    <!--发生额（结转损益）-->
+    <select id="getHappenBalance" parameterType="ReportProfitParams" resultType="BigDecimal">
+        SELECT
+        IF(bs.balance_direction='DEBIT',
+        IF(IFNULL(SUM(bvr.debit),0)=0,IFNULL(SUM(bvr.credit),0),IFNULL(SUM(bvr.debit),0)),
+        IF(IFNULL(SUM(bvr.credit),0)=0,IFNULL(SUM(bvr.debit),0),IFNULL(SUM(bvr.credit),0))
+        )
+        FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        LEFT JOIN book_carryover bc ON bv.type_class_id = bc.carryover_id
+        where bvr.del_flag = '0' and bv.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',#{subjectCode} ,'%') and bc.code = 'carryForward'
+        <if test="startPeriod != null">
+            and bv.year_period &gt;= #{startPeriod}
+        </if>
+        <if test="endPeriod != null">
+            and bv.year_period &lt;= #{endPeriod}
+        </if>
+    </select>
+
+    <!--发生额（包含结转损益）-->
+    <select id="getYearHappenBalance" parameterType="ReportProfitParams" resultType="BigDecimal">
+        SELECT
+        IF(bs.balance_direction='DEBIT',
+        IF(IFNULL(SUM(bvr.debit),0)=0,IFNULL(SUM(bvr.credit),0),IFNULL(SUM(bvr.debit),0)),
+        IF(IFNULL(SUM(bvr.credit),0)=0,IFNULL(SUM(bvr.debit),0),IFNULL(SUM(bvr.credit),0))
+        )
+        FROM `book_voucher_record` bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        LEFT JOIN book_carryover bc ON bv.type_class_id = bc.carryover_id
+        where bvr.del_flag = '0' and bv.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',#{subjectCode} ,'%')
+        and bs.code LIKE CONCAT('',#{subjectCode} ,'%') and bc.code = 'carryForward'
+        <if test="endPeriod != null">
+            and bv.year_period &lt;= #{endPeriod} and YEAR(year_period) = YEAR(#{endPeriod})
+        </if>
+    </select>
+
+    <select id="getProfitByTotal" resultType="BookReportProfit">
+        select * from book_report_profit where book_id = #{bookId} and profit_name = '四、净利润（净亏损以“-”号填列）'
+    </select>
+
+    <select id="getProfit" resultType="BookReportProfit">
+        select * from book_report_profit where book_id = #{bookId} and row_num = #{rowNum}
+    </select>
+
+</mapper>

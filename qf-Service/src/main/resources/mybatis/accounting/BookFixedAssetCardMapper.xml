@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.fixedAsset.mapper.BookFixedAssetCardMapper">
+
+    <resultMap type="BookFixedAssetCard" id="BookFixedAssetCardResult">
+        <result property="cardId"    column="card_id"    />
+        <result property="cardCode"    column="card_code"    />
+        <result property="name"    column="name"    />
+        <result property="categoryId"    column="category_id"    />
+        <result property="yearPeriod"    column="year_period"    />
+        <result property="startDate"    column="start_date"    />
+        <result property="cleanPeriod"    column="clean_period"    />
+        <result property="depreciationMethod"    column="depreciation_method"    />
+        <result property="term"    column="term"    />
+        <result property="fixedAssetSubjectId"    column="fixed_asset_subject_id"    />
+        <result property="depreciationSubjectId"    column="depreciation_subject_id"    />
+        <result property="depreciationFeeSubjectId"    column="depreciation_fee_subject_id"    />
+        <result property="originalValue"    column="original_value"    />
+        <result property="residualRate"    column="residual_rate"    />
+        <result property="residualRatePre"    column="residual_rate_pre"    />
+        <result property="impairmentPrepare"    column="impairment_prepare"    />
+        <result property="alreadyDepreciationDate"    column="already_depreciation_date"    />
+        <result property="startDepreciation"    column="start_depreciation"    />
+        <result property="startNetValue"    column="start_net_value"    />
+        <result property="monthDepreciation"    column="month_depreciation"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="remark"    column="remark"    />
+        <result property="supplierId"    column="supplier_id"    />
+        <result property="customerId"    column="customer_id"    />
+        <result property="projectId"    column="project_id"    />
+        <result property="departmentId"    column="department_id"    />
+        <result property="personId"    column="person_id"    />
+        <result property="stockId"    column="stock_id"    />
+    </resultMap>
+
+    <update id="updateFixedAssetFatherSubjectId">
+        UPDATE book_fixed_asset_card SET fixed_asset_subject_id = #{subjectId} where fixed_asset_subject_id = #{fatherSubjectId} and book_id = #{bookId};
+    </update>
+    <update id="updateDepreciationFatherSubjectId">
+        UPDATE book_fixed_asset_card SET depreciation_subject_id = #{subjectId} where depreciation_subject_id = #{fatherSubjectId} and book_id = #{bookId};
+    </update>
+    <update id="updateDepreciationFeeFatherSubjectId">
+        UPDATE book_fixed_asset_card SET depreciation_fee_subject_id = #{subjectId} where depreciation_fee_subject_id = #{fatherSubjectId} and book_id = #{bookId};
+    </update>
+
+    <select id="getList" parameterType="BookFixedAssetCard" resultType="BookFixedAssetCardVo">
+        SELECT
+        fscr.card_id,fscr.card_code,fscr.`name`,faca.`name` categoryName ,fscr.year_period,fscr.start_date,fscr.clean_period,
+        fscr.depreciation_method,fscr.term,original_value,fscr.residual_rate,fscr.residual_rate_pre,fscr.impairment_prepare,
+        fscr.already_depreciation_date,fscr.start_depreciation,fscr.month_depreciation,fscr.start_net_value,fscr.create_time,fscr.`status`
+        from book_fixed_asset_card fscr
+        LEFT JOIN book_fixed_asset_category faca ON fscr.category_id = faca.category_id
+        WHERE fscr.del_flag = 0
+        <if test="bookId != null">
+            and fscr.book_id = #{bookId}
+        </if>
+        <if test="cardCode != null and cardCode != ''">
+            and fscr.card_code = #{cardCode}
+        </if>
+        <if test="name != null and name != ''">
+            and fscr.name like concat('%',#{name},'%')
+        </if>
+        <if test="categoryId != null">
+            and fscr.category_id = #{categoryId}
+        </if>
+        <if test="depreciationMethod != null">
+            and fscr.depreciation_method = #{depreciationMethod}
+        </if>
+    </select>
+
+
+    <select id="getBalanceDepreciation" resultType="BigDecimal">
+        SELECT IFNULL(SUM(month_depreciation),0) from book_fixed_asset_card
+        where book_id = #{bookId} and del_flag = '0' and status = 1
+        and start_depreciation + month_depreciation &lt;=  original_value
+        and year_period &lt;= #{yearPeriod}
+    </select>
+
+    <!--计提折旧-借贷方金额及科目-->
+    <select id="selectDepreciationSubject" resultType="DepreciationSubjectVo">
+            SELECT
+            '计提折旧' summary,
+            'DEBIT' balanceDirection,
+            '借' balanceDirectionText,
+            SUM(month_depreciation) debit,
+            0 credit,
+            depreciation_fee_subject_id subjectId,
+            depreciation_fee_subject_auxiliary_id auxiliaryId
+            from book_fixed_asset_card
+            where book_id = #{bookId} and del_flag = '0' and status = 1
+            and start_depreciation + month_depreciation &lt;=  original_value
+            and year_period &lt;= #{yearPeriod}
+            GROUP BY depreciation_fee_subject_id,depreciation_fee_subject_auxiliary_id
+        UNION ALL
+            SELECT
+            '计提折旧' summary,
+            'CREDIT' balanceDirection,
+            '贷' balanceDirectionText,
+            0 debit,
+            SUM(month_depreciation) credit,
+            depreciation_subject_id subjectId,
+            depreciation_subject_auxiliary_id auxiliaryId
+            from book_fixed_asset_card
+            where book_id = #{bookId} and del_flag = '0' and status = 1
+            and start_depreciation + month_depreciation &lt;=  original_value
+            and year_period &lt;= #{yearPeriod}
+            GROUP BY depreciation_subject_id,depreciation_subject_auxiliary_id
+    </select>
+
+</mapper>

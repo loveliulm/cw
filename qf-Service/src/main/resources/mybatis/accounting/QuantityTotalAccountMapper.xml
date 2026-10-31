@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.accountBook.mapper.QuantityTotalAccountMapper">
+
+    <select id="getSubjectList" parameterType="ParamsVo" resultType="QuantityTotalAccount">
+        SELECT * from (
+        <foreach collection="SUBJECT_CODE_RULE" index="index" item="codeNum" separator="union all">
+            SELECT subject_id,name subjectName,code subjectCode,CONCAT(code,' ',full_name) subjectNameBy,`level` from book_subject where  code in(
+            SELECT LEFT(bs.code,#{codeNum}) FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId} and bs.is_quantity = 1
+            and bv.year_period &gt;= #{startPeriod} and bv.year_period &lt;= #{endPeriod}
+            GROUP BY LEFT(bs.code,#{codeNum})
+            ) and book_id = #{bookId} and `level` = #{index}+1
+        </foreach>
+        )a where 1=1
+        <if test="startLevel != null">
+            and a.level >= #{startLevel}
+        </if>
+        <if test="endLevel != null">
+            and a.level &lt;= #{endLevel}
+        </if>
+        GROUP BY a.subject_id order BY a.subjectCode
+    </select>
+
+    <!--根据当前账期-期初余额-->
+    <select id="startBalanceByPeriod" parameterType="ParamsVo" resultType="QuantityTotalAccount">
+        SELECT
+        IFNULL(bsp.period_end_balance,0) startBalance
+        from book_subject_period bsp
+	    LEFT JOIN book_subject bs on bsp.subject_id = bs.subject_id
+        where bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        and bsp.year_period = #{currentPeriod} and bs.is_quantity = 1 and bs.is_leaf = 1
+    </select>
+
+    <!--根据当前账期-本期合计-->
+    <select id="monthBalanceByPeriod" parameterType="ParamsVo" resultType="QuantityTotalAccount">
+        SELECT *,IFNULL(ROUND(periodDebit/quantityPeriodDebit,2),0) pricePeriodDebit,
+        IFNULL(ROUND(periodCredit/quantityPeriodCredit,2),0) pricePeriodCredit from (
+            SELECT
+            IFNULL(SUM(bvr.debit),0) periodDebit,
+            IFNULL(SUM(bvr.credit),0) periodCredit,
+            IFNULL(SUM(IF(bvr.balance_direction='DEBIT',bvr.quantity,0)),0) quantityPeriodDebit,
+            IFNULL(SUM(IF(bvr.balance_direction='CREDIT',bvr.quantity,0)),0) quantityPeriodCredit
+            FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId}
+            and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+            and bv.year_period &gt;= #{startPeriod} and bv.year_period &lt;= #{endPeriod}
+            and bvr.price is not null and bvr.quantity is not null
+        ) a
+    </select>
+
+    <!--根据当前账期-本年累计-->
+    <select id="yearBalanceByPeriod" parameterType="ParamsVo" resultType="QuantityTotalAccount">
+        SELECT *,IFNULL(ROUND(yearDebit/quantityYearDebit,2),0) priceYearDebit,
+        IFNULL(ROUND(yearCredit/quantityYearCredit,2),0) priceYearCredit from (
+            SELECT
+            IFNULL(SUM(bvr.debit),0) yearDebit,
+            IFNULL(SUM(bvr.credit),0) yearCredit,
+            IFNULL(SUM(IF(bvr.balance_direction='DEBIT',bvr.quantity,0)),0) quantityYearDebit,
+            IFNULL(SUM(IF(bvr.balance_direction='CREDIT',bvr.quantity,0)),0) quantityYearCredit
+            FROM `book_voucher_record` bvr
+            LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+            where bvr.del_flag = '0' and bv.book_id = #{bookId}
+            and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+            <if test="endPeriod">
+                and bv.year_period &lt;= #{endPeriod} and YEAR(year_period) = YEAR(#{endPeriod})
+            </if>
+            and bvr.price is not null and bvr.quantity is not null
+        ) a
+    </select>
+
+</mapper>

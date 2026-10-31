@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.FirstPageMapper">
+
+    <select id="subjectDebitTotalEndBalance" parameterType="FirstPageParams" resultType="BigDecimal">
+        SELECT IFNULL(SUM(balance),0) from book_subject where book_id = #{bookId} and balance_direction = 'DEBIT' and level = 1 and balance != 0
+    </select>
+
+
+    <select id="voucherDebitTotalBalance" parameterType="FirstPageParams" resultType="BigDecimal">
+        SELECT IFNULL(SUM(debit),0) from book_voucher_record bvr
+        LEFT JOIN book_voucher bv on bv.voucher_id = bvr.voucher_id
+        WHERE bv.del_flag = '0' and bvr.del_flag = '0' and  bv.book_id =  #{bookId} and bv.year_period = #{yearPeriod}
+    </select>
+
+
+    <select id="subjectInfo" resultType="FirstPageFinancial">
+        SELECT full_name subjectName,balance from book_subject where book_id = #{params.bookId}
+        <foreach collection="configs" item="item" open="and (" separator="or" close=")">
+            subject_id = #{item.value}
+        </foreach>
+    </select>
+
+    <select id="taxInfoByPeriod" resultType="FirstPageTax">
+        select
+        SUM(taxVat) taxVat,
+        SUM(taxBuilding) taxBuilding,
+        SUM(taxEducation)taxEducation,
+        SUM(taxCorporate)taxCorporate,
+        SUM(taxPersonal) taxPersonal
+        from(
+            <foreach collection="configs" item="item" separator="union all">
+                SELECT
+                <if test="item.key != null and item.key == '增值税'">
+                    IFNULL(IF(bs.balance_direction='DEBIT',SUM(IFNULL(bvr.debit,0)),SUM(IFNULL(bvr.credit,0))),0) taxVat,
+                    0 taxBuilding, 0 taxEducation, 0 taxCorporate, 0 taxPersonal
+                </if>
+                <if test="item.key != null and item.key == '城市维护建设税'">
+                    0 taxVat,
+                    IFNULL(IF(bs.balance_direction='DEBIT',SUM(IFNULL(bvr.debit,0)),SUM(IFNULL(bvr.credit,0))),0) taxBuilding,
+                    0 taxEducation, 0 taxCorporate, 0 taxPersonal
+                </if>
+                <if test="item.key != null and item.key == '教育附加税'">
+                    0 taxVat, 0 taxBuilding,
+                    IFNULL(IF(bs.balance_direction='DEBIT',SUM(IFNULL(bvr.debit,0)),SUM(IFNULL(bvr.credit,0))),0) taxEducation,
+                    0 taxCorporate, 0 taxPersonal
+                </if>
+                <if test="item.key != null and item.key == '个人所得税'">
+                    0 taxVat, 0 taxBuilding, 0 taxEducation,
+                    IFNULL(IF(bs.balance_direction='DEBIT',SUM(IFNULL(bvr.debit,0)),SUM(IFNULL(bvr.credit,0))),0) taxCorporate,
+                    0 taxPersonal
+                </if>
+                <if test="item.key != null and item.key == '企业所得税'">
+                    0 taxVat, 0 taxBuilding, 0 taxEducation, 0 taxCorporate,
+                    IFNULL(IF(bs.balance_direction='DEBIT',SUM(IFNULL(bvr.debit,0)),SUM(IFNULL(bvr.credit,0))),0) taxPersonal
+                </if>
+                from book_subject bs
+                LEFT JOIN book_voucher_record bvr ON bvr.subject_id = bs.subject_id
+                LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id
+                where bvr.del_flag = '0' and bs.code like CONCAT((SELECT code from book_subject where subject_id = #{item.value}),'%')
+                and bs.book_id = #{bookPeriod.bookId} and bv.year_period = #{bookPeriod.yearPeriod}
+            </foreach>
+        )a
+    </select>
+</mapper>

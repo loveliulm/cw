@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.accountBook.mapper.AuxiliaryDetailAccountMapper">
+
+    <!--获取辅助核算科目-->
+    <select id="getSubjectList" parameterType="AuxiliaryAccParamsVo" resultType="SubjectVo">
+         SELECT subject_id,name subjectName,code subjectCode,CONCAT(code,' ',full_name) subjectNameBy
+          from book_subject where is_auxiliary = TRUE and book_id = #{bookId}
+    </select>
+
+    <select id="getAuxiliary" parameterType="AuxiliaryAccParamsVo" resultType="AuxiliaryVo">
+        SELECT ba.auxiliary_id,ba.code auxiliaryCode,ba.name auxiliaryName FROM book_voucher_record bvr
+        LEFT JOIN book_voucher bv ON bvr.voucher_id = bv.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 1">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.supplier_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 2">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.customer_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 3">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.project_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 4">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.department_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 5">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.person_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 6">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.stock_id
+        </if>
+        where bvr.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        and bv.year_period &gt;= #{startPeriod} and bv.year_period &lt;= #{endPeriod}
+        <if test="auxiliaryId != null">
+            and ba.auxiliary_id = #{auxiliaryId}
+        </if>
+        group by ba.auxiliary_id
+    </select>
+
+
+    <!--辅助核算明细列表 -->
+    <select id="getDetailList" parameterType="AuxiliaryAccParamsVo" resultType="AuxiliaryDetailAccount">
+        SELECT bv.voucher_date,ba.`name` auxiliaryName,bv.voucher_code,bvr.summary,IFNULL(bvr.credit,0) creditTotal,IFNULL(bvr.debit,0) debitTotal FROM book_voucher_record bvr
+        LEFT JOIN book_voucher bv ON bvr.voucher_id = bv.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 1">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.supplier_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 2">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.customer_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 3">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.project_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 4">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.department_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 5">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.person_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 6">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.stock_id
+        </if>
+        where bvr.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        and bv.year_period = #{currentPeriod}
+        <if test="auxiliaryId != null">
+            and ba.auxiliary_id = #{auxiliaryId}
+        </if>
+    </select>
+
+    <!--根据当前账期-期初余额-->
+    <select id="selectPeriodInitBalance" parameterType="AuxiliaryAccParamsVo" resultType="AuxiliaryDetailAccount">
+        SELECT '期初余额'summary,IFNULL(SUM(bap.period_end_balance),0) balance
+        from book_auxiliary_period bap
+        LEFT JOIN book_auxiliary ba ON bap.auxiliary_id = ba.auxiliary_id
+        where bap.subject_id = #{subjectId} and bap.year_period = #{currentPeriod} and bap.del_flag = '0'
+        <if test="auxiliaryTypeId != null">
+            and ba.auxiliary_type_id = #{auxiliaryTypeId}
+        </if>
+        <if test="auxiliaryId != null">
+            and ba.auxiliary_id = #{auxiliaryId}
+        </if>
+    </select>
+
+    <!--根据当前账期-本期合计-->
+    <select id="totalPeriod" parameterType="AuxiliaryAccParamsVo" resultType="AuxiliaryDetailAccount">
+        SELECT '本期合计'summary, IFNULL(SUM(bvr.debit),0) debitTotal,IFNULL(SUM(bvr.credit),0) creditTotal  FROM book_voucher_record bvr
+        LEFT JOIN book_voucher bv ON bvr.voucher_id = bv.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 1">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.supplier_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 2">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.customer_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 3">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.project_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 4">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.department_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 5">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.person_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 6">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.stock_id
+        </if>
+        where bvr.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        and bv.year_period = #{currentPeriod}
+        <if test="auxiliaryId != null">
+            and ba.auxiliary_id = #{auxiliaryId}
+        </if>
+    </select>
+
+    <!--根据当前账期-本年累计-->
+    <select id="totalYear" parameterType="AuxiliaryAccParamsVo" resultType="AuxiliaryDetailAccount">
+        SELECT '本年累计'summary, IFNULL(SUM(bvr.debit),0) debitTotal,IFNULL(SUM(bvr.credit),0) creditTotal  FROM book_voucher_record bvr
+        LEFT JOIN book_voucher bv ON bvr.voucher_id = bv.voucher_id
+        LEFT JOIN book_subject bs on bvr.subject_id = bs.subject_id
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 1">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.supplier_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 2">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.customer_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 3">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.project_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 4">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.department_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 5">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.person_id
+        </if>
+        <if test="auxiliaryTypeId != null and auxiliaryTypeId == 6">
+            LEFT JOIN book_auxiliary ba ON ba.auxiliary_id = bvr.stock_id
+        </if>
+        where bvr.del_flag = '0' and bv.book_id = #{bookId}
+        and bs.code LIKE CONCAT('',(SELECT code from book_subject where subject_id = #{subjectId} and book_id = #{bookId}) ,'%')
+        and bv.year_period &lt;= #{currentPeriod} and YEAR(year_period) = YEAR(#{currentPeriod})
+        <if test="auxiliaryId != null">
+            and ba.auxiliary_id = #{auxiliaryId}
+        </if>
+    </select>
+
+
+
+
+</mapper>

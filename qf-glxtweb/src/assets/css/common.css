@@ -1,0 +1,25 @@
+/**
+ * 全局CSS
+ * @author YM
+ */
+ :root{
+    --color-success: #67C23A;
+    --color-warning: #E6A23C;
+    --color-danger: #F56C6C;
+    --color-info: #909399;
+    --color-disabled: #6f6f6f;
+ }
+ /*字体*/
+ .text-success{
+     color: var(--color-success);
+ }
+ .text-warning {
+    color: var(--color-warning)
+  }
+  .text-danger {
+    color: var(--color-danger)
+  }
+  .text-info {
+    color: var(--color-info)
+  }
+

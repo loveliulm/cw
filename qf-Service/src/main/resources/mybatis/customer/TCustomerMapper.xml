@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.customer.mapper.TCustomerMapper">
+
+    <resultMap type="TCustomer" id="TCustomerResult">
+        <result property="id"    column="id"    />
+        <result property="customerCode"    column="customer_code"    />
+        <result property="customerName"    column="customer_name"    />
+        <result property="serviceType"    column="service_type"    />
+        <result property="unifiedSocialCreditCode"    column="unified_social_credit_code"    />
+        <result property="vatType"    column="vat_type"    />
+        <result property="representative"    column="representative"    />
+        <result property="establishmentDate"    column="establishment_date"    />
+        <result property="registrationAddress"    column="registration_address"    />
+        <result property="managerAccountingUserId"    column="manager_accounting_user_id"    />
+        <result property="bookkeepingAccountingUserId"    column="bookkeeping_accounting_user_id"    />
+        <result property="assistantAccountingUserId"    column="assistant_accounting_user_id"    />
+        <result property="accountingStatus"    column="accounting_status"    />
+        <result property="normalContactPhone"    column="normal_contact_phone"    />
+        <result property="representativeCard"    column="representative_card"    />
+        <result property="remark"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="isopentaxplate"    column="isOpen_taxPlate"    />
+        <result property="countryTaxPass"    column="country_tax_pass"    />
+        <result property="incomeTaxPass"    column="income_tax_pass"    />
+        <result property="isOpenInvoice"    column="is_open_invoice"    />
+        <!--<result property="bankName"    column="bank_name"    />-->
+        <!--<result property="bankAcount"    column="bank_acount"    />-->
+        <!--<result property="drawer"    column="drawer"    />-->
+        <!--<result property="payee"    column="payee"    />-->
+        <!--<result property="reviewer"    column="reviewer"    />-->
+        <!--        <result property="electronicInvoiceQuota"    column="electronic_invoice_quota"    />-->
+        <!--        <result property="electronicDividedInvoiceQuota"    column="electronic_divided_invoice_quota"    />-->
+        <!--        <result property="specialInvoiceQuota"    column="special_invoice_quota"    />-->
+        <!--        <result property="specialDividedInvoiceQuota"    column="special_divided_invoice_quota"    />-->
+        <!--        <result property="generalInvoiceQuota"    column="general_invoice_quota"    />-->
+        <!--        <result property="generalDividedInvoiceQuota"    column="general_divided_invoice_quota"    />-->
+    </resultMap>
+
+    <sql id="customer">
+        c.id,c.customer_code,c.customer_name,c.service_type,c.unified_social_credit_code,c.vat_type,c.representative,c.establishment_date,c.registration_address,
+        c.manager_accounting_user_id,c.bookkeeping_accounting_user_id,c.assistant_accounting_user_id,c.accounting_status,c.normal_contact_phone,c.representative_card,
+        c.remark,c.create_by,c.create_time,c.update_time,c.status,c.del_flag,c.isopen_taxplate,c.country_tax_pass,c.income_tax_pass,c.is_open_invoice
+    </sql>
+
+    <select id="customerList" parameterType="com.qifu.project.customer.domain.TCustomer" resultType="com.qifu.project.customer.domain.vo.TCustomerVo">
+        SELECT <include refid="customer"/>,s.bank as bankName,s.bank_acc as bankAcount,s.drawer as drawer,s.payee as payee,s.reviewer as reviewer,
+        (SELECT u.user_name from sys_user u where u.user_id = c.manager_accounting_user_id  ) manager_accounting ,
+        (SELECT u.user_name from sys_user u where u.user_id = c.bookkeeping_accounting_user_id  ) bookkeeping_accounting ,
+        (SELECT u.user_name from sys_user u where u.user_id = c.assistant_accounting_user_id  ) assistant_accounting
+        FROM t_customer c left join t_seller s on c.id = s.customer_id where c.del_flag = '0'
+        <if  test="customerName != null and customerName != ''">
+            and c.customer_name LIKE CONCAT('%',#{customerName},'%')
+        </if>
+        <if  test="status != null and status != ''">
+            and c.status = #{status}
+        </if>
+        <if  test="deptId != null and deptId != ''">
+            and c.dept_id = #{deptId}
+        </if>
+        <if  test="managerAccountingUserId != null and managerAccountingUserId != 0">
+            and c.manager_accounting_user_id = #{managerAccountingUserId}
+        </if>
+        <if  test="bookkeepingAccountingUserId != null and bookkeepingAccountingUserId != 0">
+            and c.bookkeeping_accounting_user_id = #{bookkeepingAccountingUserId}
+        </if>
+        <if  test="assistantAccountingUserId != null and assistantAccountingUserId != 0">
+            and c.assistant_accounting_user_id = #{assistantAccountingUserId}
+        </if>
+        <if test="isOpenInvoice != null and isOpenInvoice != ''">
+            and c.is_open_invoice = #{isOpenInvoice}
+        </if>
+        order by c.create_time desc
+    </select>
+
+    <select id="customerById" resultType="com.qifu.project.customer.domain.vo.TCustomerVo">
+        SELECT <include refid="customer"/>,s.bank as bankName,s.bank_acc as bankAcount,s.drawer as drawer,s.payee as payee,s.reviewer as reviewer,
+        (SELECT u.user_name from sys_user u where u.user_id = c.manager_accounting_user_id  ) manager_accounting ,
+        (SELECT u.user_name from sys_user u where u.user_id = c.bookkeeping_accounting_user_id  ) bookkeeping_accounting ,
+        (SELECT u.user_name from sys_user u where u.user_id = c.assistant_accounting_user_id  ) assistant_accounting
+        FROM t_customer c left join t_seller s on c.id = s.customer_id where c.id = #{id}
+    </select>
+
+
+    <delete id="deleteCustomerByIds" parameterType="Long">
+        update t_customer set del_flag = '2' where id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectByAccount" parameterType="TCustomer" resultType="com.qifu.project.customer.domain.vo.ReportData">
+        SELECT
+        sum( CASE MONTH ( a.create_time ) WHEN '1' THEN 1 ELSE 0 END ) AS january,
+        sum( CASE MONTH ( a.create_time ) WHEN '2' THEN 1 ELSE 0 END ) AS february,
+        sum( CASE MONTH ( a.create_time ) WHEN '3' THEN 1 ELSE 0 END ) AS march,
+        sum( CASE MONTH ( a.create_time ) WHEN '4' THEN 1 ELSE 0 END ) AS april,
+        sum( CASE MONTH ( a.create_time ) WHEN '5' THEN 1 ELSE 0 END ) AS may,
+        sum( CASE MONTH ( a.create_time ) WHEN '6' THEN 1 ELSE 0 END ) AS june,
+        sum( CASE MONTH ( a.create_time ) WHEN '7' THEN 1 ELSE 0 END ) AS july,
+        sum( CASE MONTH ( a.create_time ) WHEN '8' THEN 1 ELSE 0 END ) AS august,
+        sum( CASE MONTH ( a.create_time ) WHEN '9' THEN 1 ELSE 0 END ) AS september,
+        sum( CASE MONTH ( a.create_time ) WHEN '10' THEN 1 ELSE 0 END ) AS october,
+        sum( CASE MONTH ( a.create_time ) WHEN '11' THEN 1 ELSE 0 END ) AS november,
+        sum( CASE MONTH ( a.create_time ) WHEN '12' THEN 1 ELSE 0 END ) AS december
+        FROM
+        t_customer a
+        WHERE
+        YEAR ( a.create_time ) = YEAR ( NOW() )
+        <if test="deptId != null and deptId != ''">
+            AND a.dept_id = #{deptId}
+        </if>
+    </select>
+
+    <select id="selectByName" parameterType="String" resultType="TCustomer">
+        select * from t_customer where customer_name = #{customerName} LIMIT 1
+    </select>
+
+</mapper>

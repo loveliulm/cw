@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.commerce.mapper.CommerceServiceStepMapper">
+    
+    <resultMap type="CommerceServiceStep" id="CommerceServiceStepResult">
+        <result property="id"    column="id"    />
+        <result property="commerceServiceId"    column="commerce_service_id"    />
+        <result property="stepName"    column="step_name"    />
+        <result property="stepOrder"    column="step_order"    />
+        <result property="stepDescribe"    column="step_describe"    />
+        <result property="stepData"    column="step_data"    />
+        <result property="stepOutput"    column="step_output"    />
+        <result property="completeTime"    column="complete_time"    />
+        <result property="operatorUserId"    column="operator_user_id"    />
+        <result property="stepStatus"    column="step_status"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <resultMap id="CommerceServiceStepResultVo" type="com.qifu.project.commerce.domain.vo.CommerceServiceStepVo" extends="CommerceServiceStepResult">
+        <result property="operatorUserName"    column="operatorUserName"    />
+    </resultMap>
+
+    <select id="getList" parameterType="CommerceServiceStep" resultMap="CommerceServiceStepResultVo">
+        SELECT
+            css.*,
+            u.user_name operatorUserName
+        FROM
+            t_commerce_service_step css
+            LEFT JOIN sys_user u ON css.operator_user_id = u.user_id
+        <where>
+            <if test="commerceServiceId != null">
+                css.commerce_service_id = #{commerceServiceId}
+            </if>
+        </where>
+        ORDER BY css.step_order
+    </select>
+
+</mapper>

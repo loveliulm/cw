@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookAuxiliaryPeriodMapper">
+
+    <resultMap type="BookAuxiliaryPeriod" id="BookAuxiliaryPeriodResult">
+        <result property="id"    column="id"    />
+        <result property="auxiliaryId"    column="auxiliary_id"    />
+        <result property="yearPeriod"    column="year_period"    />
+        <result property="periodInitBalance"    column="period_init_balance"    />
+        <result property="periodEndBalance"    column="period_end_balance"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <!--结转辅助核算-->
+    <insert id="insertList">
+        INSERT INTO book_auxiliary_period (subject_id,auxiliary_id,period_init_balance,period_end_balance,year_period,create_time,update_time)
+        SELECT a.subject_id,a.auxiliary_id,SUM(a.period_init_balance),SUM(a.period_end_balance),#{yearPeriod},now(),now() from (
+            SELECT bs.subject_id,bvr.supplier_id auxiliary_id,0 period_init_balance,
+            IF((bs.balance_direction='CREDIT'),(IFNULL(SUM(bvr.credit),0)-IFNULL(SUM(bvr.debit),0)),(IFNULL(SUM(bvr.debit),0)-IFNULL(SUM(bvr.credit),0))) period_end_balance
+            from book_voucher_record bvr
+            LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+            WHERE bvr.del_flag = '0' AND bv.del_flag = '0' AND bv.year_period = #{yearPeriod} AND bv.book_id = #{bookId}
+            AND bs.is_auxiliary = TRUE AND bs.is_supplier = TRUE
+            GROUP BY bs.subject_id
+            UNION ALL
+            SELECT bs.subject_id,bvr.customer_id auxiliary_id,0 period_init_balance,
+            IF((bs.balance_direction='CREDIT'),(IFNULL(SUM(bvr.credit),0)-IFNULL(SUM(bvr.debit),0)),(IFNULL(SUM(bvr.debit),0)-IFNULL(SUM(bvr.credit),0))) period_end_balance
+            from book_voucher_record bvr
+            LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+            WHERE bvr.del_flag = '0' AND bv.del_flag = '0' AND bv.year_period = #{yearPeriod} AND bv.book_id = #{bookId}
+            AND bs.is_auxiliary = TRUE AND bs.is_customer = TRUE
+            GROUP BY bs.subject_id
+            UNION ALL
+            SELECT bs.subject_id,bvr.project_id auxiliary_id,0 period_init_balance,
+            IF((bs.balance_direction='CREDIT'),(IFNULL(SUM(bvr.credit),0)-IFNULL(SUM(bvr.debit),0)),(IFNULL(SUM(bvr.debit),0)-IFNULL(SUM(bvr.credit),0))) period_end_balance
+            from book_voucher_record bvr
+            LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+            WHERE bvr.del_flag = '0' AND bv.del_flag = '0' AND bv.year_period = #{yearPeriod} AND bv.book_id = #{bookId}
+            AND bs.is_auxiliary = TRUE AND bs.is_project = TRUE
+            GROUP BY bs.subject_id
+            UNION ALL
+            SELECT bs.subject_id,bvr.department_id auxiliary_id,0 period_init_balance,
+            IF((bs.balance_direction='CREDIT'),(IFNULL(SUM(bvr.credit),0)-IFNULL(SUM(bvr.debit),0)),(IFNULL(SUM(bvr.debit),0)-IFNULL(SUM(bvr.credit),0))) period_end_balance
+            from book_voucher_record bvr
+            LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+            WHERE bvr.del_flag = '0' AND bv.del_flag = '0' AND bv.year_period = #{yearPeriod} AND bv.book_id = #{bookId}
+            AND bs.is_auxiliary = TRUE AND bs.is_department = TRUE
+            GROUP BY bs.subject_id
+            UNION ALL
+            SELECT bs.subject_id,bvr.person_id auxiliary_id,0 period_init_balance,
+            IF((bs.balance_direction='CREDIT'),(IFNULL(SUM(bvr.credit),0)-IFNULL(SUM(bvr.debit),0)),(IFNULL(SUM(bvr.debit),0)-IFNULL(SUM(bvr.credit),0))) period_end_balance
+            from book_voucher_record bvr
+            LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id
+            LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+            WHERE bvr.del_flag = '0' AND bv.del_flag = '0' AND bv.year_period = #{yearPeriod} AND bv.book_id = #{bookId}
+            AND bs.is_auxiliary = TRUE AND bs.is_person = TRUE
+            GROUP BY bs.subject_id
+            UNION ALL
+            SELECT bs.subject_id,bvr.stock_id auxiliary_id,0 period_init_balance,
+            IF((bs.balance_direction='CREDIT'),(IFNULL(SUM(bvr.credit),0)-IFNULL(SUM(bvr.debit),0)),(IFNULL(SUM(bvr.debit),0)-IFNULL(SUM(bvr.credit),0))) period_end_balance
+            from book_voucher_record bvr
+            LEFT JOIN book_voucher bv ON bv.voucher_id = bvr.voucher_id LEFT JOIN book_subject bs ON bs.subject_id = bvr.subject_id
+            WHERE bvr.del_flag = '0' AND bv.del_flag = '0' AND bv.year_period = #{yearPeriod} AND bv.book_id = #{bookId}
+            AND bs.is_auxiliary = TRUE AND bs.is_stock = TRUE
+            GROUP BY bs.subject_id
+            <if test="previousPeriod != null">
+                UNION ALL
+                SELECT bap.subject_id,bap.auxiliary_id,bap.period_end_balance  period_init_balance ,0 period_end_balance
+                from book_auxiliary_period bap
+                LEFT JOIN book_subject bs ON bap.subject_id = bs.subject_id
+                where year_period = #{previousPeriod} AND bs.book_id = #{bookId} AND bap.del_flag = '0'
+            </if>
+            <if test="previousPeriod == null">
+                UNION ALL
+                SELECT bsa.subject_id,bsa.auxiliary_id,bsa.balance period_init_balance,0 period_end_balance  from book_subject_auxiliary bsa
+                LEFT JOIN book_subject bs ON bs.subject_id = bsa.subject_id
+                WHERE bsa.del_flag = '0' AND bs.book_id = #{bookId}
+            </if>
+        ) a GROUP BY a.subject_id,a.auxiliary_id
+    </insert>
+
+
+    <!--辅助核算结账-修改当前账期金额-->
+    <update id="updateBalanceByPeriod">
+        UPDATE book_auxiliary_period SET period_end_balance = period_end_balance + #{diffMoney}
+        where subject_id = #{subjectId} and year_period = #{yearPeriod} and auxiliary_id = #{auxiliaryId}
+    </update>
+
+    <!--辅助核算结账-修改之后账期金额-->
+    <update id="updateBalanceByAfterPeriod">
+        UPDATE book_auxiliary_period SET period_init_balance = period_init_balance + #{diffMoney}, period_end_balance = period_end_balance + #{diffMoney}
+        where subject_id = #{subjectId} and year_period > #{yearPeriod} and auxiliary_id = #{auxiliaryId}
+    </update>
+
+</mapper>

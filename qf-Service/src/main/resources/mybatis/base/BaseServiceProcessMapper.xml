@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.base.mapper.BaseServiceProcessMapper">
+
+    <resultMap type="BaseServiceProcess" id="BaseServiceProcessResult">
+        <result property="serviceProcessId"    column="service_process_id"    />
+        <result property="serviceProcessName"    column="service_process_name"    />
+        <result property="estimatedTime"    column="estimated_time"    />
+        <result property="serviceItemId"    column="service_item_id"    />
+        <result property="number"    column="number"    />
+    </resultMap>
+
+    <select id="selectServiceProcesslist" resultType="BaseServiceProcess">
+        select * from base_service_process where service_item_id = #{serviceItemId}
+        ORDER BY number
+    </select>
+
+
+</mapper>

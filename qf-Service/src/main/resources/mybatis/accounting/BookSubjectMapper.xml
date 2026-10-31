@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookSubjectMapper">
+
+    <resultMap type="BookSubject" id="BookSubjectResult">
+        <result property="subjectId"    column="subject_id"    />
+        <result property="name"    column="name"    />
+        <result property="fullName"    column="full_name"    />
+        <result property="code"    column="code"    />
+        <result property="bookId"    column="book_id"    />
+        <result property="subjectModelId"    column="subject_model_id"    />
+        <result property="typeId"    column="type_id"    />
+        <result property="categoryId"    column="category_id"    />
+        <result property="balance"    column="balance"    />
+        <result property="balanceChecked"    column="balance_checked"    />
+        <result property="balanceDirection"    column="balance_direction"    />
+        <result property="balanceDirectionText"    column="balance_direction_text"    />
+        <result property="balanceInit"    column="balance_init"    />
+        <result property="balanceInitChecked"    column="balance_init_checked"    />
+        <result property="balanceInitDate"    column="balance_init_date"    />
+        <result property="credit"    column="credit"    />
+        <result property="creditChecked"    column="credit_checked"    />
+        <result property="debit"    column="debit"    />
+        <result property="debitChecked"    column="debit_checked"    />
+        <result property="enable"    column="enable"    />
+        <result property="deletable"    column="deletable"    />
+        <result property="isModel"    column="is_model"    />
+        <result property="isCashFlow"    column="is_cash_flow"    />
+        <result property="isQuantity"    column="is_quantity"    />
+        <result property="quantityUnit"    column="quantity_unit"    />
+        <result property="isAuxiliary"    column="is_auxiliary"    />
+        <result property="isSupplier"    column="is_supplier"    />
+        <result property="isProject"    column="is_project"    />
+        <result property="isStock"    column="is_stock"    />
+        <result property="isDepartment"    column="is_department"    />
+        <result property="isCustomer"    column="is_customer"    />
+        <result property="isPerson"    column="is_person"    />
+        <result property="isForCurrency"    column="is_for_currency"    />
+        <result property="level"    column="level"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <insert id="insertInitSubject">
+        INSERT into book_subject
+        ( name,full_name,code,book_id,subject_model_id,type_id,category_id,balance_direction,balance_direction_text,balance_init_date,`level`,create_time,update_time,balance_init_checked,credit_checked,debit_checked,is_leaf )
+        SELECT mo.name,mo.full_name,mo.code,#{bookId},mo.model_id,mo.type_id,mo.category_id,mo.balance_direction,mo.balance_direction_text,NOW(),mo.`level`,NOW(),NOW(),mo.balance_init_checked,mo.credit_checked,mo.debit_checked,mo.is_leaf from book_subject_model mo
+        where mo.account_template_id = #{templateId}
+    </insert>
+
+    <select id="getlist" parameterType="BookSubject" resultType="BookSubject">
+        select * from book_subject where 1=1
+        <if test="bookId != null and bookId != 0">
+            and book_id = #{bookId}
+        </if>
+        <if test="name != null and name != ''">
+            and (full_name like concat('%',#{name},'%') or code like concat('%',#{name},'%'))
+        </if>
+        <if test="typeId != null and typeId != 0">
+            and type_id = #{typeId}
+        </if>
+        <if test="isModel != null">
+            and is_model = #{isModel}
+        </if>
+        order by code asc
+    </select>
+
+    <select id="templateIdByBookId" resultType="Long">
+        select account_template_id from t_account_book where book_id = #{bookId}
+    </select>
+
+    <select id="searchLeaf" resultType="BookSubjectVo">
+        select bs.*,concat(bs.code,' ',bs.full_name) subjectNameBy
+         from book_subject bs
+        where book_id = #{bookId} and is_leaf = 1 ORDER BY `code`
+    </select>
+
+    <select id="searchOriginSubject" resultType="BookSubjectVo">
+        select bs.*,concat(bs.code,' ',bs.full_name) subjectNameBy
+         from book_subject bs
+        where book_id = #{bookId} ORDER BY `code`
+    </select>
+
+    <select id="getYearProfitSubject" resultType="BookSubject">
+        SELECT * FROM `book_subject` where book_id = #{bookId} and name = '本年利润';
+    </select>
+
+    <update id="updateSubjectsBalance">
+        UPDATE book_subject bs
+        LEFT JOIN book_subject_period bsp ON bs.subject_id = bsp.subject_id and bsp.year_period = #{yearPeriod}
+        SET bs.balance = IFNULL(bsp.period_end_balance,bs.balance) where bs.book_id = #{bookId}
+    </update>
+
+    <!--科目-测算平衡-->
+    <select id="getTrialBalance" resultType="TrialBalance">
+        SELECT '期初余额（综合本位币）' node1,'累计发生额（综合本位币）' node2,
+        a.*,(a.debitTotal1-a.creditTotal1) imbalance1,(a.debitTotal2-a.creditTotal2)imbalance2
+        from (
+        SELECT
+        (SELECT SUM(balance_init) from book_subject where book_id = #{bookId} and balance_direction = 'DEBIT' and level = 1) debitTotal1,
+        (SELECT SUM(balance_init) from book_subject where book_id = #{bookId} and balance_direction = 'CREDIT'  and level = 1) creditTotal1,
+        (SELECT SUM(credit) from book_subject  where book_id = #{bookId}  and level = 1) creditTotal2,
+        (SELECT SUM(debit) from book_subject where book_id = #{bookId}  and level = 1) debitTotal2
+        )a
+    </select>
+
+    <update id="updateSubjectsBalanceByTemporary">
+        UPDATE book_subject bs
+        LEFT JOIN book_subject_period_temporary bsp ON bs.subject_id = bsp.subject_id and bsp.year_period = #{yearPeriod}
+        SET bs.balance = IFNULL(bsp.period_balance,bs.balance) where bs.book_id = #{bookId} and bsp.del_flag = '0'
+    </update>
+</mapper>

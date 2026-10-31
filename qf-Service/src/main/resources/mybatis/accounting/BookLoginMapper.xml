@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookLoginMapper">
+
+    <select id="getInfo" resultType="AccountBookVo">
+        SELECT tab.book_id,tab.customer_name,tab.account_template_id,tab.vat_type,tab.current_period,bat.name accountTemplateName,1 isCurrentBook
+        from t_account_book tab
+        LEFT JOIN book_account_template bat ON tab.account_template_id = bat.account_template_id
+        where tab.book_id = #{bookId}
+    </select>
+
+    <select id="getAccountList" resultType="AccountBookVo">
+        SELECT tab.book_id,tab.customer_name,tab.account_template_id,tab.vat_type,tab.current_period,
+        bat.name accountTemplateName,IF(#{bookId}=tab.book_id,1,0)isCurrentBook
+        from t_account_book tab
+        LEFT JOIN book_account_template bat ON tab.account_template_id = bat.account_template_id
+        where tab.dept_id = #{companyId} and tab.server_status = '正常服务' and tab.status = 0
+        order by create_time desc
+    </select>
+</mapper>

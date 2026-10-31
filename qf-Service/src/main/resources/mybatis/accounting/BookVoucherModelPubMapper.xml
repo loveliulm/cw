@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.voucher.mapper.BookVoucherModelPubMapper">
+
+    <resultMap type="BookVoucherModelPub" id="BookVoucherModelPubResult">
+        <result property="id"    column="id"    />
+        <result property="templateId"    column="template_id"    />
+        <result property="name"    column="name"    />
+        <result property="section"    column="section"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <select id="selectListByTemplateId" resultType="BookVoucherModelPub">
+        SELECT * FROM `book_voucher_model_pub` WHERE template_id = #{templateId};
+    </select>
+
+
+</mapper>

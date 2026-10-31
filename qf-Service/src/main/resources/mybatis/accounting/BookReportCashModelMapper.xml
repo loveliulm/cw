@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportCashModelMapper">
+
+    <resultMap type="BookReportCashModel" id="BookReportCashModelResult">
+        <result property="id"    column="id"    />
+        <result property="templateId"    column="template_id"    />
+        <result property="cashName"    column="cash_name"    />
+        <result property="rowNum"    column="row_num"    />
+        <result property="level"    column="level"    />
+        <result property="isRule"    column="is_rule"    />
+        <result property="cashTitle"    column="cash_title"    />
+    </resultMap>
+
+    <select id="getListByTemplate" resultType="BookReportCashModel">
+        SELECT * FROM book_report_cash_model where template_id = #{templateId}
+    </select>
+
+
+</mapper>

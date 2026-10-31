@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.sys.mapper.BookSubjectAuxiliaryMapper">
+
+    <resultMap type="BookSubjectAuxiliary" id="BookSubjectAuxiliaryResult">
+        <result property="id"    column="id"    />
+        <result property="subjectId"    column="subject_id"    />
+        <result property="auxiliaryId"    column="auxiliary_id"    />
+        <result property="balance"    column="balance"    />
+        <result property="credit"    column="credit"    />
+        <result property="debit"    column="debit"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="delFlag"    column="del_flag"    />
+    </resultMap>
+
+    <select id="getList" parameterType="BookSubjectAuxiliary" resultType="BookSubjectAuxiliary">
+        SELECT bsa.*,ba.auxiliary_type_id,concat(ba.`code`,' ',ba.`name`) auxiliaryNameBy  FROM `book_subject_auxiliary` bsa
+        LEFT JOIN book_auxiliary ba ON bsa.auxiliary_id = ba.auxiliary_id
+        where bsa.del_flag = '0'
+        <if test="auxiliaryTypeId != null">
+            and ba.auxiliary_type_id = #{auxiliaryTypeId}
+        </if>
+        <if test="subjectId != null">
+            and bsa.subject_id = #{subjectId}
+        </if>
+    </select>
+
+    <update id="updateBySubjectId">
+        update book_subject_auxiliary set del_flag = '2' where subject_id = #{subjectId}
+    </update>
+
+
+    <update id="updateOneSubjectId">
+        update book_subject_auxiliary set subject_id = #{subjectId} where subject_id = #{fatherSubjectId}
+    </update>
+
+
+    <select id="selectByTotalBalance" parameterType="AuxiliaryAccParamsVo" resultType="BookSubjectAuxiliary">
+        SELECT IFNULL(SUM(bsa.balance),0) balance,IFNULL(SUM(bsa.credit),0) credit,IFNULL(SUM(bsa.debit),0) debit from book_subject_auxiliary bsa
+        LEFT JOIN book_auxiliary ba ON bsa.auxiliary_id = ba.auxiliary_id
+        WHERE bsa.del_flag = '0'
+        <if test="subjectId != null">
+            and bsa.subject_id = #{subjectId}
+        </if>
+        <if test="auxiliaryTypeId != null">
+            and ba.auxiliary_type_id = #{auxiliaryTypeId}
+        </if>
+        <if test="auxiliaryId != null">
+            and bsa.auxiliary_id = #{auxiliaryId}
+        </if>
+    </select>
+
+</mapper>

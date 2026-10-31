@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportProfitRuleMapper">
+
+    <resultMap type="BookReportProfitRule" id="BookReportProfitRuleResult">
+        <result property="id"    column="id"    />
+        <result property="subjectCode"    column="subject_code"    />
+        <result property="subject"    column="subject"    />
+        <result property="sign"    column="sign"    />
+        <result property="dataRule"    column="data_rule"    />
+        <result property="profitId"    column="profit_id"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <insert id="initInsetReportProfitRule">
+        INSERT INTO book_report_profit_rule (`subject_code`, `subject`, `sign`, `data_rule`, `profit_id`,create_time,update_time)
+        values
+        <foreach collection="profitRuleModels" item="item" separator=",">
+            ( #{item.subjectCode}, #{item.subject}, #{item.sign},#{item.dataRule},#{profitId},NOW(),NOW())
+        </foreach>
+    </insert>
+
+
+    <select id="getList" resultType="BookReportProfitRule">
+        SELECT * from book_report_profit_rule where profit_id = #{profitId} and del_flag = '0'
+    </select>
+
+    <update id="deleteProfitRule">
+        update book_report_profit_rule set del_flag = '2' where profit_id = #{profitId} and del_flag = '0'
+    </update>
+
+
+
+</mapper>

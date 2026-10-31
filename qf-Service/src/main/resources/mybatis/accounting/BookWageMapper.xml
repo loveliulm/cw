@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.wage.mapper.BookWageMapper">
+
+    <select id="getTotalBalanceByWageTotal" resultType="BookWage">
+        SELECT
+        IFNULL(SUM(gross_pay),0) gross_pay,
+        IFNULL(SUM(endowment_insurance),0) endowment_insurance,
+        IFNULL(SUM(medicare_insurance),0) medicare_insurance,
+        IFNULL(SUM(unemployed_insurance),0) unemployed_insurance,
+        IFNULL(SUM(housing_fund),0) housing_fund,
+        IFNULL(SUM(other_deductions),0) other_deductions,
+        IFNULL(SUM(with_holding_tax),0) with_holding_tax,
+        IFNULL(SUM(sickness_insurance),0) sickness_insurance,
+        IFNULL(SUM(net_pay),0) net_pay
+        FROM `book_wage` where book_id = #{bookId} and year_period &lt;= #{yearPeriod} and del_flag = '0';
+    </select>
+
+    <select id="getList" parameterType="BookWage" resultType="BookWage">
+        SELECT id,book_id,deptment_id ,
+        (SELECT name from book_auxiliary where auxiliary_id = deptment_id) deptment_name,
+        person_id,
+        (SELECT name from book_auxiliary where auxiliary_id = person_id) person_name,
+        identity_card,
+        wage,bonus,allowance,subsidy,absent,gross_pay,endowment_insurance,medicare_insurance,unemployed_insurance,
+        sickness_insurance,housing_fund,other_deductions,acc_income,acc_special_deduction,
+        acc_child_edu_deduction,acc_housing_loans_deduction,acc_continuing_edu_deduction,acc_elderly_deduction,
+        acc_total_special_deduction,acc_other_deduction,acc_tax_payable
+        acc_taxes_paid,with_holding_tax,net_pay,create_time,update_time,year_period,del_flag
+         FROM `book_wage` where del_flag = '0'
+         <if test="bookId != null">
+             and book_id = #{bookId}
+         </if>
+         <if test="yearPeriod != null">
+             and year_period &lt;= #{yearPeriod}
+         </if>
+    </select>
+
+    <select id="getWageById" resultType="BookWage">
+        SELECT id,book_id,deptment_id ,
+        (SELECT name from book_auxiliary where auxiliary_id = deptment_id) deptment_name,
+        person_id,
+        (SELECT name from book_auxiliary where auxiliary_id = person_id) person_name,
+        identity_card,
+        wage,bonus,allowance,subsidy,absent,gross_pay,endowment_insurance,medicare_insurance,unemployed_insurance,
+        sickness_insurance,housing_fund,other_deductions,acc_income,acc_special_deduction,
+        acc_child_edu_deduction,acc_housing_loans_deduction,acc_continuing_edu_deduction,acc_elderly_deduction,
+        acc_total_special_deduction,acc_other_deduction,acc_tax_payable
+        acc_taxes_paid,with_holding_tax,net_pay,create_time,update_time,year_period,del_flag
+        FROM `book_wage` where del_flag = '0'
+        <if test="id != null">
+            and id = #{id}
+        </if>
+    </select>
+</mapper>

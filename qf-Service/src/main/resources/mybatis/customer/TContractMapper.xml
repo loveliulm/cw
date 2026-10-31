@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.customer.mapper.TContractMapper">
+
+    <resultMap type="TContract" id="TContractResult">
+        <result property="contractId"    column="contract_id"    />
+        <result property="contractNo"    column="contract_no"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="customerId"    column="customer_id"    />
+        <result property="customerName"    column="customer_name"    />
+        <result property="serviceTypeId"    column="service_type_id"    />
+        <result property="serviceTypeName"    column="service_type_name"    />
+        <result property="serviceItemId"    column="service_item_id"    />
+        <result property="serviceItemName"    column="service_item_name"    />
+        <result property="contractStartDate"    column="contract_start_date"    />
+        <result property="contractEndDate"    column="contract_end_date"    />
+        <result property="payType"    column="pay_type"    />
+        <result property="receivedMoney"    column="received_money"    />
+        <result property="signStaffUserId"    column="sign_staff_user_id"    />
+        <result property="signStaffName"    column="sign_staff_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="status"    column="status"    />
+        <result property="del_flag"    column="delFlag"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <delete id="deleteContractByIds" parameterType="Long">
+        update t_contract set del_flag = '2' where contract_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectContract" parameterType="TContract" resultType="TContract">
+        SELECT * from( select t.contract_id,t.contract_no,t.dept_id,t.customer_id,t.service_item_id,t.service_type_id,
+        (SELECT customer_name from t_customer where id = t.customer_id) customer_name,
+        (SELECT service_item_name from base_service_item where service_item_id = t.service_item_id) service_item_name,
+        (SELECT service_type_name from base_service_type where service_type_id = t.service_type_id) service_type_name,
+        (SELECT user_name from sys_user where user_id = t.sign_staff_user_id ) sign_staff_name,
+        t.contract_start_date,
+        t.contract_end_date,
+        t.pay_type,
+        t.received_money,
+        t.sign_staff_user_id,
+        t.del_flag,
+        t.create_time
+         from t_contract t )a where del_flag = '0'
+        <if test="status != null"> and status = #{status}</if>
+        <if test="deptId != null"> and dept_id = #{deptId}</if>
+        <if test="customerName != null and customerName != ''"> and customer_name like CONCAT('%',#{customerName},'%') </if>
+        <if test="contractNo != null and contractNo != ''"> and contract_no like CONCAT('%',#{contractNo},'%') </if>
+        <if test="serviceTypeId != null and serviceTypeId != 0"> and service_type_id = #{serviceTypeId} </if>
+        order by create_time desc
+    </select>
+
+    <update id="updateStatusByEndDate">
+        update t_contract set status = #{status} where contract_id = #{contractId}
+    </update>
+
+
+</mapper>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportCashRuleModelMapper">
+
+    <resultMap type="BookReportCashRuleModel" id="BookReportCashRuleModelResult">
+        <result property="id"    column="id"    />
+        <result property="subjectCode"    column="subject_code"    />
+        <result property="subject"    column="subject"    />
+        <result property="sign"    column="sign"    />
+        <result property="dataRule"    column="data_rule"    />
+        <result property="cashId"    column="cash_id"    />
+    </resultMap>
+
+    <select id="getListByCashId" resultType="BookReportCashRuleModel">
+        SELECT * from book_report_cash_rule_model where cash_id = #{cashId}
+    </select>
+
+
+</mapper>

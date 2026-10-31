@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportProfitModelMapper">
+
+    <resultMap type="BookReportProfitModel" id="BookReportProfitModelResult">
+        <result property="id"    column="id"    />
+        <result property="templateId"    column="template_id"    />
+        <result property="profitName"    column="profit_name"    />
+        <result property="rowNum"    column="row_num"    />
+        <result property="level"    column="level"    />
+        <result property="isRule"    column="is_rule"    />
+        <result property="profitTitle"    column="profit_title"    />
+    </resultMap>
+
+    <select id="getListByTemplate" resultType="BookReportProfitModel">
+        SELECT * FROM book_report_profit_model where template_id = #{templateId}
+    </select>
+
+
+</mapper>

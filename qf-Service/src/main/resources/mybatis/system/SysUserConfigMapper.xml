@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.system.mapper.SysUserConfigMapper">
+
+    <resultMap type="SysUserConfig" id="SysUserConfigResult">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="type" column="type"/>
+        <result property="name" column="name"/>
+        <result property="details" column="details"/>
+        <result property="unit" column="unit"/>
+        <result property="isCost" column="is_cost"/>
+        <result property="age" column="age"/>
+        <result property="sex" column="sex"/>
+        <result property="phone" column="phone"/>
+        <result property="idCard" column="id_card"/>
+        <result property="deptIds" column="dept_ids"/>
+        <result property="address" column="address"/>
+        <result property="isContract" column="is_contract"/>
+        <result property="sort" column="sort"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectUserConfigVo">
+        select id, user_id, `type`, `name`, details, unit, is_cost, age, sex, phone, id_card, dept_ids, address, is_contract, sort, create_by, create_time, update_by, update_time, remark
+		from sys_user_config
+    </sql>
+
+    <select id="selectList" parameterType="SysUserConfig" resultMap="SysUserConfigResult">
+        <include refid="selectUserConfigVo"/>
+        <where>
+            <if test="name != null and name != ''">
+                AND name like concat('%', #{name}, '%')
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="details != null and details != ''">
+                AND details = #{details}
+            </if>
+            AND user_id = #{userId}
+        </where>
+        order by sort
+    </select>
+
+    <select id="selectById" parameterType="Long" resultMap="SysUserConfigResult">
+        <include refid="selectUserConfigVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertInfo" parameterType="SysUserConfig">
+        insert into sys_user_config (
+        <if test="userId != null ">user_id,</if>
+        <if test="type != null">type,</if>
+        <if test="name != null and name != '' ">name,</if>
+        <if test="details != null and details != '' ">details,</if>
+        <if test="unit != null and unit != '' ">unit,</if>
+        <if test="isCost != null">is_cost,</if>
+        <if test="age != null">age,</if>
+        <if test="sex != null">sex,</if>
+        <if test="phone != null and phone != ''">phone,</if>
+        <if test="idCard != null and idCard != ''">id_card,</if>
+        <if test="deptIds != null and deptIds != ''">dept_ids,</if>
+        <if test="address != null and address != ''">address,</if>
+        <if test="isContract != null">is_contract,</if>
+        <if test="sort != null">sort,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        create_time,
+        update_time
+        )values(
+        <if test="userId != null">#{userId},</if>
+        <if test="type != null">#{type},</if>
+        <if test="name != null and name != ''">#{name},</if>
+        <if test="details != null and details != ''">#{details},</if>
+        <if test="unit != null and unit != ''">#{unit},</if>
+        <if test="isCost != null">#{isCost},</if>
+        <if test="age != null">#{age},</if>
+        <if test="sex != null">#{sex},</if>
+        <if test="phone != null and phone != ''">#{phone},</if>
+        <if test="idCard != null and idCard != ''">#{idCard},</if>
+        <if test="deptIds != null and deptIds != ''">#{deptIds},</if>
+        <if test="address != null and address != ''">#{address},</if>
+        <if test="isContract != null">#{isContract},</if>
+        <if test="sort != null">#{sort},</if>
+        <if test="remark != null and remark != ''">#{remark},</if>
+        <if test="createBy != null and createBy != ''">#{createBy},</if>
+        sysdate(),
+        sysdate()
+        )
+    </insert>
+
+    <update id="updateInfo" parameterType="SysUserConfig">
+        update sys_user_config
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="details != null and details != ''">details = #{details},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="isCost != null">is_cost = #{isCost},</if>
+            <if test="age != null">age = #{age},</if>
+            <if test="sex != null">sex = #{sex},</if>
+            <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="idCard != null and idCard != ''">id_card = #{idCard},</if>
+            <if test="deptIds != null and deptIds != ''">dept_ids = #{deptIds},</if>
+            <if test="address != null and address != ''">address = #{address},</if>
+            <if test="isContract != null">is_contract = #{isContract},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="Long">
+        delete from sys_user_config where id = #{id}
+    </delete>
+
+    <delete id="deleteByIds" parameterType="Long">
+        delete from sys_user_config where id in
+        <foreach item="ids" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

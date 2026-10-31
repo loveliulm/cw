@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.project.customer.mapper.DeclarationMapper">
+    
+    <resultMap type="Declaration" id="DeclarationResult">
+        <result property="id"    column="id"    />
+        <result property="customerId"    column="customer_id"    />
+        <result property="taxVatChange"    column="tax_vat_change"    />
+        <result property="taxBuilding"    column="tax_building"    />
+        <result property="taxEducation"    column="tax_education"    />
+        <result property="taxCorporate"    column="tax_corporate"    />
+        <result property="taxPersonal"    column="tax_personal"    />
+        <result property="taxStamp"    column="tax_stamp"    />
+        <result property="taxOther"    column="tax_other"    />
+        <result property="total"    column="total"    />
+        <result property="year"    column="year"    />
+        <result property="month"    column="month"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="isDel"    column="is_del"    />
+    </resultMap>
+
+    <select id="getTaxByYear" parameterType="Declaration" resultType="com.qifu.project.customer.domain.vo.ReportData">
+        SELECT
+            sum( CASE WHEN `month` = 1 THEN 1 ELSE 0 END ) january,
+            sum( CASE WHEN `month` = 2 THEN 1 ELSE 0 END ) february,
+            sum( CASE WHEN `month` = 3 THEN 1 ELSE 0 END ) march,
+            sum( CASE WHEN `month` = 4 THEN 1 ELSE 0 END ) april,
+            sum( CASE WHEN `month` = 5 THEN 1 ELSE 0 END ) may,
+            sum( CASE WHEN `month` = 6 THEN 1 ELSE 0 END ) june,
+            sum( CASE WHEN `month` = 7 THEN 1 ELSE 0 END ) july,
+            sum( CASE WHEN `month` = 8 THEN 1 ELSE 0 END ) august,
+            sum( CASE WHEN `month` = 9 THEN 1 ELSE 0 END ) september,
+            sum( CASE WHEN `month` = 10 THEN 1 ELSE 0 END ) october,
+            sum( CASE WHEN `month` = 11 THEN 1 ELSE 0 END ) november,
+            sum( CASE WHEN `month` = 12 THEN 1 ELSE 0 END ) december
+        FROM
+            t_declaration
+        WHERE
+            is_del = 0 AND `year` = #{year} AND customer_id = #{customerId}
+    </select>
+</mapper>

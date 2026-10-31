@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qifu.accounting.report.mapper.BookReportAssetsRuleMapper">
+
+    <resultMap type="BookReportAssetsRule" id="BookReportAssetsRuleResult">
+        <result property="id"    column="id"    />
+        <result property="subjectCode"    column="subject_code"    />
+        <result property="subject"    column="subject"    />
+        <result property="sign"    column="sign"    />
+        <result property="dataRule"    column="data_rule"    />
+        <result property="rowNum"    column="row_num"    />
+        <result property="bookId"    column="book_id"    />
+        <result property="isClassify"    column="is_classify"    />
+    </resultMap>
+
+    <insert id="initInsetReportAssetsRule">
+        INSERT INTO book_report_assets_rule (`subject_code`, `subject`, `sign`, `data_rule`, `row_num`, `book_id`,is_classify,create_time,update_time)
+        SELECT subject_code,`subject`,sign,data_rule,row_num,#{bookId},is_classify,NOW(),NOW() from book_report_assets_rule_model
+        where template_id = #{templateId}
+    </insert>
+
+    <select id="getList" parameterType="ReportAssetsParams" resultType="BookReportAssetsRule">
+        SELECT * FROM `book_report_assets_rule` where row_num = #{rowNum} and book_id = #{bookId} and del_flag = '0'
+        <if test="isClassify != null">
+            and is_classify = #{isClassify}
+        </if>
+    </select>
+
+    <update id="updateByRowNum" parameterType="ReportAssetVo">
+        update book_report_assets_rule set del_flag = '2' where row_num = #{rowNum} and book_id = #{bookId}
+        <if test="isClassify != null">
+            and is_classify = #{isClassify}
+        </if>
+    </update>
+
+
+</mapper>
